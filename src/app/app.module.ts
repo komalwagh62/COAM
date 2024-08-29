@@ -36,8 +36,9 @@ import { MapViewerComponent } from './map-viewer/map-viewer.component';
         FooterComponent,
         MapViewerComponent,
     ],
-    bootstrap: [AppComponent],
-     imports: [BrowserModule,
+  
+    imports: [
+        BrowserModule,
         AppRoutingModule,
         MatSelectModule,
         MatFormFieldModule,
@@ -54,8 +55,9 @@ import { MapViewerComponent } from './map-viewer/map-viewer.component';
         MatMenuModule,
         LayoutModule,
         MatSidenavModule
-    
+
     ],
-     providers: [AuthGuard, provideHttpClient(withInterceptorsFromDi())]
+    bootstrap: [AppComponent],
+    providers: [AuthGuard, provideHttpClient(withInterceptorsFromDi())]
 })
 export class AppModule { }
