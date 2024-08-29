@@ -7,11 +7,12 @@ import { LoginComponent } from './login/login.component';
 import { MapViewerComponent } from './map-viewer/map-viewer.component';
 
 const routes: Routes = [
+  { path: '', redirectTo: '', pathMatch: 'full' },
   {
-    path: '', component: MapComponent, pathMatch: 'full', canActivate: [AuthGuard]
+    path: '', component: MapComponent, canActivate: [AuthGuard]
   },
   { path: 'login', component: LoginComponent },
-  { path: 'mapview', component: MapViewerComponent }
+  { path: 'mapview', component: MapViewerComponent, canActivate: [AuthGuard] }
 
 
 ];
