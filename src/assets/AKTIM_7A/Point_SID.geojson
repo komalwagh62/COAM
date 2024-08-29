@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "Point_SID",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "LKA",  "Speed": "", "Altitude": "" }, "geometry": { "type": "Point", "coordinates": [ 74.11138889, 28.18888889, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "F8711",  "Speed": "MAX 190 KIAS", "Altitude": "3000" }, "geometry": { "type": "Point", "coordinates": [ 77.28303333, 28.4016944, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "ATRIN",  "Speed": "", "Altitude": "" }, "geometry": { "type": "Point", "coordinates": [ 75.31888889, 27.81833333, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "AKBAN",  "Speed": "MAX 250 KIAS", "Altitude": "FL150" }, "geometry": { "type": "Point", "coordinates": [ 76.44081944, 28.23155, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "DP510",  "Speed": "MAX 230 KIAS", "Altitude": "" }, "geometry": { "type": "Point", "coordinates": [ 76.66602778, 28.34755556, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "DP503",  "Speed": "MAX 210 KIAS", "Altitude": "FL080" }, "geometry": { "type": "Point", "coordinates": [ 77.07809444, 28.44585, 0.0 ] } },
+{ "type": "Feature", "properties": { "Name": "DP502",  "Speed": "", "Altitude": "FL110" }, "geometry": { "type": "Point", "coordinates": [ 76.96641667, 28.46984444, 0.0 ] } }
+]
+}

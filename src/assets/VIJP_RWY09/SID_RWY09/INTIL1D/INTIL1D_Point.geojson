@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "INTIL1D_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "INTIL", "Altitude": "-FL130", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.54466667, 26.46413889 ] } },
+{ "type": "Feature", "properties": { "Name": "JP004", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.98355, 26.72269167 ] } },
+{ "type": "Feature", "properties": { "Name": "JP443", "Altitude": "-FL110", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.36396944, 26.61637222 ] } },
+{ "type": "Feature", "properties": { "Name": null, "Altitude": "+2000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.846891033489584, 26.827524153200127 ] } }
+]
+}

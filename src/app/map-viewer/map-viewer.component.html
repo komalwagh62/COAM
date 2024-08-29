@@ -1,0 +1,82 @@
+<!-- Menu Button -->
+<button mat-mini-fab color="none" class="manu1" [matMenuTriggerFor]="belowMenu" (click)="toggleMenu()">
+  <mat-icon color="primary">menu</mat-icon>
+</button>
+
+<!-- Mat Menu (empty) -->
+<mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false"></mat-menu>
+
+<!-- Container for buttons -->
+<div class="buttons-container">
+  <!-- Button to toggle filter popup (conditionally rendered) -->
+  <button *ngIf="menuOpen" mat-mini-fab class="mycolor filter-toggle-button" title="Conventional Airways" (click)="toggleConventionalAirwaysLayer()">
+    <div class="icon-container">
+      <img src="assets/BlackAWY.png" title="Conventional Airways" style="height: 25px; width: 30px;" alt="Conventional Airways">
+    </div>
+  </button>
+
+  <!-- Button for Non-Conventional Airways -->
+  <button *ngIf="menuOpen" mat-mini-fab class="mycolor" title="Non-Conventional Airways" (click) = "toggleNonConventionalAirwaysLayer()">
+    <div class="icon-container">
+      <img src="assets/AWY.png" title="Non-Conventional Airways"  style="height: 25px; width: 30px;" alt="Non-Conventional Airways">
+    </div>
+  </button>
+
+  <!-- Icon button for Filter Data -->
+  <button mat-mini-fab color="primary" class="filter-icon" title="Filter Data" (click)="toggleFilterPopup()">
+    <mat-icon>filter_list</mat-icon>
+  </button>
+</div>
+
+<!-- Filter Popup -->
+<div *ngIf="filterPopupVisible && menuOpen" id="filter-popup" class="filter-popup">
+  <h3>Filter By</h3>
+  <a href="#" id="filter-popup-closer" class="filter-popup-closer" (click)="closeFilterPopup($event)">×</a>
+  <form>
+    <div class="form-row">
+      <div class="form-group">
+        <label for="type">Type:</label>
+        <select id="type" #typeInput>
+          <option value="conv">Conv</option>
+          <option value="nonconv">NonConv</option>
+        </select>
+      </div>
+      <div class="form-group">
+        <label for="track_magnetic">Track Magnetic:</label>
+        <input type="text" id="track_magnetic" #trackMagneticInput>
+      </div>
+      <div class="form-group">
+        <label for="airway_id">Airway ID:</label>
+        <input type="text" id="airway_id" #airwayIdInput>
+      </div>
+      <div class="form-group">
+        <label for="upper_limit">Upper Limit:</label>
+        <input type="text" id="upper_limit" #upperLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="lower_limit">Lower Limit:</label>
+        <input type="text" id="lower_limit" #lowerLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="mea">MEA:</label>
+        <input type="text" id="mea" #meaInput>
+      </div>
+      <div class="form-group">
+        <label for="lateral_limits">Lateral Limits:</label>
+        <input type="text" id="lateral_limits" #lateralLimitsInput>
+      </div>
+    </div>
+    <button type="button" class="buttons" (click)="filterAndShowFeatures(typeInput.value, trackMagneticInput.value, airwayIdInput.value, upperLimitInput.value, lowerLimitInput.value, meaInput.value, lateralLimitsInput.value)">Apply</button>
+  </form>
+</div>
+
+
+
+<!-- Popup for feature information -->
+<div id="popup" class="ol-popup">
+  <a href="#" id="popup-closer" class="ol-popup-closer" (click)="closePopup($event)"></a>
+  <div id="popup-content"></div>
+</div>
+
+<!-- Map Container -->
+<div id="map" class="map"></div>

@@ -1,0 +1,12 @@
+{
+    "type": "FeatureCollection",
+    "name": "TELUV7E_Line",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Distance": "6.17", "Bearing": "272.31°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.78125, 13.3097306 ], [ 77.6757556, 13.3106167 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "12.70", "Bearing": "272.24°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.6757556, 13.3106167 ], [ 77.4587222, 13.3122361 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "30.92", "Bearing": "206.87°" }, "geometry": { "type": "LineString", "coordinates": [ [ 78.1869444, 14.1616667 ], [ 77.9479361, 13.6624806 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "23.22", "Bearing": "206.63°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.9479361, 13.6624806 ], [ 77.78125, 13.3097306 ] ] } }
+    ]
+    }
+    

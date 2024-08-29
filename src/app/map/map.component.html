@@ -1,0 +1,383 @@
+<div class="offcanvas offcanvas-lg offcanvas-top bg-transparent" data-bs-backdrop="true" tabindex="-1" id="offcanvasTop"
+    aria-labelledby="offcanvasTopLabel">
+
+    <nav class="navbar navbar-expand-lg  bg-body-tertiary">
+        <div class="container-fluid">
+            <!-- <a class="navbar-brand" href="https://www.cognitivenavigation.com" title="Cognitive navigation Pvt.Ltd">
+                <img src="https://www.cognitivenavigation.com/wp-content/uploads/2024/03/cropped-C_Name.png"
+                    alt="Cognitive navigation Pvt.Ltd" title="Cognitive navigation Pvt.Ltd" width="30" height="50"
+                    class="d-inline-block align-text-top">
+            </a> -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
+                aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse justify-content-md-center" id="navbarNav">
+                <ul class="navbar-nav gap-2 p-1 small">
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link  active dropdown-toggle custom-outline btn-outline-primary " href="#"
+                            id="admDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            AERONAUTICAL DATA<br><br> MANAGEMENT
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="admDropdown">
+                            <li><a class="dropdown-item " href="#">AIP digitalization</a></li>
+                            <li><a class="dropdown-item" href="#">Terrain & Obstacle Database</a></li>
+                            <li><a class="dropdown-item" href="#">AMDB</a></li>
+                            <li class="dropdown">
+                                <a href="#" id="submenu1" role="button" data-bs-toggle="dropdown" aria-expanded="false"
+                                    class="dropdown-item dropdown-toggle">
+                                    Instrument Flight Procedure Management
+                                </a>
+                                <ul class="dropdown-menu" aria-labelledby="submenu1">
+                                    <li><a href="#" class="dropdown-item">Digi Aero Chart</a></li>
+                                    <li><a href="#" class="dropdown-item">Flight Procedure Design System</a></li>
+                                    <li><a href="#" class="dropdown-item">Flight Procedures Management System</a></li>
+                                </ul>
+                            </li>
+                            <li><a class="dropdown-item" href="#">Aero attributes</a></li>
+                            <li><a class="dropdown-item" href="#">Airport & Enroute compatibility</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item badge text-wrap"><a class="nav-link custom-outline" href="#"><br> NOTAM
+                            MANAGEMENT</a></li>
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link dropdown-toggle custom-outline" href="#" id="wxmDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            AVIATION WEATHER <br> <br>MANAGEMENT
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="wxmDropdown">
+                            <li><a class="dropdown-item" href="#">Weather data</a></li>
+                            <li><a class="dropdown-item" href="#">Analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Weather dashboard</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link dropdown-toggle custom-outline" href="#" id="fpmDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            FLIGHT PLANNING <br> <br>MANAGEMENT
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="fpmDropdown">
+                            <li><a class="dropdown-item" href="#">Route Planning</a></li>
+                            <li><a class="dropdown-item" href="#">Operational Suitability</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link dropdown-toggle custom-outline" href="#" id="apmDropdown" role="button"
+                            data-bs-toggle="dropdown" aria-expanded="false">
+                            ACFT PERFORMANCE <br> <br>MANAGEMENT
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="apmDropdown">
+                            <li><a class="dropdown-item" href="#">Block time & Payload analysis</a></li>
+                            <li><a class="dropdown-item" href="#">RTOW analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Reduced Thrust analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Fleet Performance analysis, BIAS</a></li>
+                            <li><a class="dropdown-item" href="#">Terrain and EOEP analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Fuel Analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Carbon emission</a></li>
+                            <li><a class="dropdown-item" href="#">Report & Analytics</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link dropdown-toggle custom-outline" href="#" id="airworthinessDropdown"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false"><br>
+                            AIRWORTHINESS
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="airworthinessDropdown">
+                            <li><a class="dropdown-item" href="#">Temporary Downgrade status</a></li>
+                            <li><a class="dropdown-item" href="#">MEL impact analysis</a></li>
+                            <li><a class="dropdown-item" href="#">Aircraft Equipment Status</a></li>
+                            <li><a class="dropdown-item" href="#">MEL, CDL, STC</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item dropdown badge text-wrap">
+                        <a class="nav-link dropdown-toggle custom-outline" href="#" id="dashboardReportsDropdown"
+                            role="button" data-bs-toggle="dropdown" aria-expanded="false"><br>
+                            DASHBOARD & REPORTS
+                        </a>
+                        <ul class="dropdown-menu" aria-labelledby="dashboardReportsDropdown">
+                            <li><a class="dropdown-item" href="#">Ops dashboard</a></li>
+                            <li><a class="dropdown-item" href="#">Fuel Dashboard</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- <button type="button" mat-button class="bg-body-tertiary " color="black">Log In</button> -->
+                </ul>
+
+            </div>
+            <button type="button" mat-stroked-button class="bg-body-tertiary text-end" style="color: red;"
+                (click)="logout()">Log-Out</button>
+
+        </div>
+    </nav>
+</div>
+<div class="example-container" [class.example-is-mobile]="mobileQuery.matches">
+
+    <mat-sidenav-container class="example-sidenav-container" [style.marginTop.px]="mobileQuery.matches ? 56 : 0"
+        autosize>
+        <mat-sidenav #snav [mode]="mobileQuery.matches ? 'over' : 'side'" opened="true"
+            [fixedInViewport]="mobileQuery.matches" fixedTopGap="56">
+            <div class="container-fluid img-size mt-2">
+                <a class="navbar-brand mt-4" href="https://www.cognitivenavigation.com"
+                    title="Cognitive navigation Pvt.Ltd">
+                    <img src="https://www.cognitivenavigation.com/wp-content/uploads/2024/03/cropped-C_Name.png"
+                        alt="Cognitive navigation Pvt.Ltd" title="Cognitive navigation Pvt.Ltd" width="10" height="40"
+                        class="d-inline-block align-text-top">
+                </a>
+            </div>
+            <form [formGroup]="Airform" class="text-center mt-4" autocomplete="on" novalidate>
+                <div class="example-container">
+
+                    <!--Select Airport -->
+                    <div>
+                        <mat-form-field appearance="outline">
+                            <mat-label>Airport</mat-label>
+                            <mat-select formControlName="selectedAirport" [(ngModel)]="selectedAirport">
+                                <mat-option *ngFor="let option of optionsAirport" [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matSuffix class="position"><img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAB4UlEQVR4nO2WuUpDQRSGv6gExQVUiHHDTm3EzhcwhQj6BFYivoBgQPERLCxtVOy0EGsFRUJeQMWlcKm00UJFG9GRCxMYLtebuUtyF+aDA2Fy5tzzzzmzgCEdCGmJR4QgpJ2UCMkBO8Ai0ErCWysHXAJvwCYwToL3SB64VmKWgDmg2WVOB9AVx83eC9wocS17AdaBEcVvTFbuE3gGMrofKNuC65i1on7oA24d4v0CJ8CpMvYDbHkJ7lVE0ErlgSuXuJW9NOo1sNfEdP27Xf6bkStuF3EU5HSrlZAl4A7YAApAixRw7FKNab8i1MSyGr5ZD0KsTXpo6/nK71dg2ybiEWgMIuRcBipq+BalrzVHh07gXkn2AliQ1Rm0CVkjIAUZyDruhlz8BoAP6TvlIf6ynPMuL8cKPYqIb6CfENiXAfcC+jgxK+et2sa7FCEHhES11Z7UrJoTw8CTw2nUpgjxUuHILsQmYN7l4HgAGsIQUo8LMfPPmABWCIla3SM6fMlnS+KF7BIiUQqZICVCQsUIiRvCtFbMEKYiMUOYikRMOcBDsZ5WqiYk6gRFWC/s2D4xFIyQ1FRE+Ohbv70uNPaCESJMRYhXa9UTYYTYMBWJa2uJBJgrpRgkKDTszF2GwWDAxh9CvUCVxRLBQQAAAABJRU5ErkJggg=="></mat-icon>
+                            <mat-hint>Select Airport</mat-hint>
+                        </mat-form-field>
+                    </div>
+
+
+                    <!--Select Runway -->
+                    <div class="mt-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Runway</mat-label>
+                            <mat-select formControlName="selectedRunway" [(ngModel)]="selectedRunway">
+                                <ng-container *ngIf="optionsBengaluruKIARunway && optionsBengaluruKIARunway.length > 0">
+                                    <mat-option *ngFor="let option of optionsBengaluruKIARunway" [value]="option.value">
+                                        {{ option.label }}
+                                    </mat-option>
+                                </ng-container>
+                                <ng-container *ngIf="optionsVIJPJAIPURRunway && optionsVIJPJAIPURRunway.length > 0">
+                                    <mat-option *ngFor="let option of optionsVIJPJAIPURRunway" [value]="option.value">
+                                        {{ option.label }}
+                                    </mat-option>
+                                </ng-container>
+                                <ng-container *ngIf="optionsVEPYPAKYONGRunway && optionsVEPYPAKYONGRunway.length > 0">
+                                    <mat-option *ngFor="let option of optionsVEPYPAKYONGRunway" [value]="option.value">
+                                        {{ option.label }}
+                                    </mat-option>
+                                </ng-container>
+                            </mat-select>
+                            <mat-icon matSuffix class="position">
+                                <img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAACA0lEQVR4nO2YTysFURjGfy4pO1mxYiFLWbBgQxILyso3sBGxUIrPoJCwUHZsLAiR76CUBRtX1/9YsVAoRkfvqdM0c407515z3fPU2505532fd545f94zFxwc/hSeWDHFBsIJwY3IN9zUCoNbIzHhJWnXSlRezwnBFcTETS13RMGNSDjc1IoJL0mLPVF5vVIXMgxcATfASAHzWiUcNOK0DRWjkBOJGQdG5fqkAHmtE75LTJWYJ21FJ8TzxdjgiA0nBLsvIzbciGD3ZcRGyY5IdxYh3XnMa42wFlg3/M+MvjOjfQOoS6KQcmAMeBK/F2AGqDR81PW09CmfZ2ACqIiR99fIRtgGHBk+u0ADUAZ0GH4d0lYPbBv+x0B7DnlzQhBhNbAMfEhfRg6KrcCsnHr9a+RS+pT4AeBC2hXHKlATIW8s+Am7gHvj/LQPzAHnASdeP4e2NDAP7AFv0vYI9BZSyKnRph9C2x2wkEWIevhbX4zJkSmkEL1gPeNNrgCdQCokxrxPie8S8ODj+sjCYV3Ionz1rQF9ITtP1IKodrweWSPX8vtTTM4o2cr+b4Q0GzEpMX3fkse81gjVfJ8EXn3bbNq4V31TP1T0PxeyFVAvwuzAYt7IiEqo/3BQ9gkcSgXvlwfXpwBt5ZbyRkZUwk0piKrKNwX0N8oRRRXEHYt5HRzIE74A2beFM/qxv+YAAAAASUVORK5CYII=">
+                            </mat-icon>
+                            <mat-hint>Select Runway</mat-hint>
+                        </mat-form-field>
+                    </div>
+
+
+                    <!--Select Type of Procedure -->
+                    <div class="mt-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Type of Procedure</mat-label>
+                            <mat-select formControlName="selectedTypeofProcedure" multiple
+                                [(ngModel)]="selectedTypeofProcedure">
+                                <mat-option *ngFor="let option of optionsRWY_09LTypeofProcedure" [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matSuffix class="position">
+                                <img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAACzUlEQVR4nO2aSWgUQRSGvzFxCRgUkwgjKAoieFCC5JAg5CRRRDy4gUpUEFzBUy4KAQlGFESUGBAVFUE8TkQQFBRD3CFiDnFB1GDAZYwOLiS4jrT8LUXTGbsTW6fa+aBh+r161KuZ7np/VQ0UKJAX7AY+AM+Aa8AhYBIWkgaynusxUIFlpJT8QaAGaNf9JaAIi6hT4k+BEcBEoFe2PVhEAnikxBfK5vwyn4DvwBIsokEDOWfYtsr2HpiJJZQBA8A3YJphP6HBPATGYQmnlbQzHbuUAJ2yn9VjmPfUKuHXwBjDPh3IyLcDS+hWwqs89sV68b8C87GAbRpIh4+vWb4+YOrfSui4On0D7A0RNx74qNhZHp9THC/K16n3J3IyHsnh1ocgHFVMq4+vHOiR35nRIueWOmszvsGgM84cxbwDSn38VZqqnTabiJgWY5Zx5cayEPE3fpPoevmd6l9NhKxTR2eADfr8ACgOGL9GMV052hxRm+dAkoiYbcjxIg3Cua8PGD/akPc1OdrcVpurwEgioBjo19zvyI+VPmuOoNepHP1MUQHNDvNKA1eAzcAobycdarRA8rxriJ0MaLYajHnAlz8wmKyubqmJX+yTo5H8pxxYAdwz1kYTXOdyH2me74wF7ijv/a5xsgwvsYtK5f3KNSRleIGdA+kzFavNj1ara9wlw07ynwq90+7L3qOy8ZMLMi6yefpNAG/lSFpSENuBLd6COEMNeiVR7g9DolQHkCiXQ+i4UKxWBylDqYYRjWsVczfAuiVS0XhAnTQBT/R5aYj4m4pxlLMf9fJ/BuYSIdfV0fkhLKwqjY250kH8/WqzkYjJxGWpe8z46Q/bvPkQm+2g/3qDrtYoTk6N8Nsy3Y5Fm9jNhq3EEHFtNmxilxnHCubzf9K2Y4WGOBz0JOJy9FYXl8PQVFyOp9Nx+cNAk+qE+xeOlihleYEC/Ht+AGO8f70m8/aPAAAAAElFTkSuQmCC">
+                            </mat-icon>
+                            <mat-hint>Select Type of Procedure</mat-hint>
+                        </mat-form-field>
+                    </div>
+
+                    <!--Select Procedure Name -->
+                    <div class="mt-3">
+                        <mat-form-field appearance="outline">
+                            <mat-label>Procedure Name</mat-label>
+                            <mat-select formControlName="selectedProcedureName" multiple
+                                [(ngModel)]="selectedProcedureName" (selectionChange)="updateLayers()">
+                                <mat-option *ngFor="let option of optionsProcedureName" [value]="option.value">
+                                    {{ option.label }}
+                                </mat-option>
+                            </mat-select>
+                            <mat-icon matSuffix class="position">
+                                <img
+                                    src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADIAAAAyCAYAAAAeP4ixAAAACXBIWXMAAAsTAAALEwEAmpwYAAAA6klEQVR4nO2aQQ6CQAxF/xIvhTdU8Ui6MN5EuMR3UxIWOiFMaQX/S7qgIXQ+7TSTdAAhfoYngEeC3x2aRfurOAC4AhgmAaaBGOAfAHQAmhohly9BIoXQ7FwjpLePtIml1drza8H6i8HuAG4f3l3Tz9p9s8rGy1gHJcQXKiOGSssZqrRm/Ak6WXpGuBchkVBCDGXEGaq0ArvWnC7GLbTfdCGRUEIMZcQZqrT+6dDIvQiJhBJiKCPOUKWVcGgssYn2my4kEkqIoYw4Q5VWYRgazdFjGFoaT0fbqUZIY2LGzGRYbzP2qgsDQmAZb15H1KBW7TMcAAAAAElFTkSuQmCC">
+                            </mat-icon>
+                            <mat-hint>Select Procedure Name</mat-hint>
+                        </mat-form-field>
+                    </div>
+                    <div class="d-grid gap-2 col-10 mx-auto mt-4">
+                        <button type="button" value="Export
+                    GeoJSON" class="btn btn-outline-primary rounded-5 py-2 px-4">Export GeoJSON</button>
+
+                        <button type="button" value="Export CSV"
+                            class="btn btn-outline-primary rounded-5 py-2 px-4">Export
+                            CSV</button>
+
+                    </div>
+                </div>
+
+            </form>
+
+        </mat-sidenav>
+
+        <mat-sidenav-content>
+            <div class="content">
+                <div class="map-container">
+
+                    <button mat-mini-fab color="none" class="top-center-button" title="Open Navigation Toolbar"
+                        type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasTop"
+                        aria-controls="offcanvasTop">
+                        <div class="icon-container">
+                            <mat-icon title="Open Navigation Toolbar">keyboard_arrow_down</mat-icon>
+                        </div>
+                    </button>
+
+                    <div class="butoom-center-button " title="Cognitive navigation Pvt.Ltd">
+
+                        <!-- <div class="container-fluid">
+                            <a class="" href="https://www.cognitivenavigation.com" title="Cognitive navigation Pvt.Ltd">
+                                <img src="https://www.cognitivenavigation.com/wp-content/uploads/2024/03/cropped-C_Name.png"
+                                    alt="Cognitive navigation Pvt.Ltd" title="Cognitive navigation Pvt.Ltd" width="50"
+                                    height="40" class="d-inline-block align-text-top">
+                            </a>
+                        </div> -->
+
+                        <small title="Cognitive navigation Pvt.Ltd" color="primary">Cognitive Navigation
+                        </small>
+
+                    </div>
+
+
+
+
+                    <!-- your-component.component.html -->
+                    <div class="top-right-buttons">
+                        <select class="form-select form-select-sm" aria-label="Default select example">
+                            <option selected>AIRAC 2402</option>
+                            <option value="1">AIRAC 2403</option>
+                            <option value="2">AIRAC 2404</option>
+                            <option value="3">AIRAC 2405</option>
+                        </select>
+                        <div class="btn-group" role="group" aria-label="Basic example">
+                            <input type="search" class="btn" id="site-search" placeholder="Search"
+                                [class.expanded]="isExpanded">
+                            <button class="btn btn-outline-primary" type="button" (click)="toggleSearchBar()">
+                                <i class="bi bi-search"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <button mat-mini-fab class="airplane" (click)="fetchFlightData()"  type="button">
+                        <div class="icon-container">
+                            <mat-icon color="primary">airplanemode_active</mat-icon>
+                        </div>
+                    </button>
+                    <button mat-mini-fab color="none" class="sideManu" (click)="toggleSidenav(snav)"
+                        [title]="isSidenavOpen ? 'Close Sidenav' : 'Open Sidenav'" type="button">
+                        <div class="icon-container">
+                            <mat-icon>{{ isSidenavOpen ? 'keyboard_arrow_left' : 'keyboard_arrow_right' }}</mat-icon>
+                        </div>
+                    </button>
+
+                    <button mat-mini-fab color="none" class="manu1" [matMenuTriggerFor]="belowMenu"
+                        (click)="toggleMenu()">
+                        <mat-icon color="primary">menu</mat-icon>
+                        <!-- <mat-icon *ngIf="!menuOpen" color="primary">menu</mat-icon>
+                        <mat-icon *ngIf="menuOpen" color="primary">close</mat-icon> -->
+                    </button>
+                    <mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
+                        <div class="d-grid gap-2 col-6 mx-auto  justify-content-md-end">
+                            <button mat-mini-fab class="mycolor" title="Conventional Airways"
+                                (click)="loadconvlinedata($event)">
+                                <div class="icon-container"> <img src="assets/BlackAWY.png" title="Conventional Airways"
+                                        style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Non-Conventional Airways"
+                                (click)="loadnonconvlinedata($event)">
+                                <div class="icon-container"> <img src="assets/AWY.png" title="Non-Conventional Airways"
+                                        style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="FIR" (click)="loadFIR($event)">
+                                <div class="icon-container">
+                                    <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Waypoint" (click)="loadwaypoint($event)">
+                                <div class="icon-container">
+                                    <mat-icon title="Waypoint" color="primary">change_history</mat-icon>
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Navaids" (click)="loadnavaids($event)">
+                                <div class="icon-container">
+                                    <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids"
+                                        alt="Controlled Airspace">
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Controlled Airspace"
+                                (click)="loadcontrolairspace($event)">
+                                <div class="icon-container">
+                                    <img src="assets/CA.png" style="height: 100%; width: 60%; "
+                                        title="Controlled Airspace" alt="Controlled Airspace">
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Restricted Airspace"
+                                (click)="loadrestricted_areas($event)">
+                                <div class="icon-container">
+                                    <img src="assets/Restricted_Airspace.png" title="Restricted Airspace"
+                                        style="height: 25px; width: 25px;" alt="Restricted Airspace">
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle"
+                                (click)="loadaerodrome_obstacle($event)">
+                                <div class="icon-container">
+                                    <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle"
+                                        style="height: 80%;  width: 50px; " alt="Aerodrome Obstacle">
+                                </div>
+                            </button>
+
+                            <button mat-mini-fab class="mycolor" title="Airport" (click)="loadairport($event)">
+                                <div class="icon-container">
+                                    <img src="assets/airport.png" title="Airport" style="height: 25px; width: 30px;"
+                                        alt="Airport">
+                                </div>
+                            </button>
+                        </div>
+                    </mat-menu>
+
+
+
+                    <!-- <button class="btn live-location-button" (click)="loadairway2()" title="Thailand Conventional Airways" style="color: blue;" type="button">
+                        <div class="icon-container">
+                            <img src="assets/BlackAWY.png" title="Thailand Conventional Airways"
+                            style="height: 25px; width: 30px;" alt="Restricted_Airspace" >
+                        </div>
+                    </button>
+
+                    <button class="btn Thailand-Waypoint" (click)="loadthailandenroute()" title="Thailand Waypoint " style="color: blue;" type="button">
+                        <div class="icon-container">
+                            <i class="bi bi-triangle-fill"  title="Thailand Waypoint " ></i>
+                           
+                        </div>
+                    </button>
+                    <button class="btn World-FIR" title="World FIR"  (click)="loadFIR1()" style="color: blue;" type="button">
+                        <div class="icon-container">
+                         
+                            <i class="bi bi-pentagon" title="World FIR"></i>
+                        </div>
+                    </button> -->
+                    <!-- Other buttons -->
+                    <div id="map" style="height: 100vh;"></div>
+                </div>
+            </div>
+        </mat-sidenav-content>
+    </mat-sidenav-container>
+</div>

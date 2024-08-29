@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+"name": "GUNIM7J_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL801", "Altitude": "+7000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.50873333, 13.30941389 ] } },
+{ "type": "Feature", "properties": { "Name": "BL503", "Altitude": "-FL110", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.63773333, 13.52399722 ] } },
+{ "type": "Feature", "properties": { "Name": "OPAMO", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.09052778, 14.59294444 ] } },
+{ "type": "Feature", "properties": { "Name": "GUNIM", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.53569444, 14.08563889 ] } },
+{ "type": "Feature", "properties": { "Name": null, "Altitude": "+3400", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.653200268170011, 13.207514563835103 ] } }
+]
+}

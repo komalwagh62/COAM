@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "GUNIM7L_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32643" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "332°", "Distance": "16", "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 801151.922034665360115, 1500110.99753502313979 ], [ 816421.176919471356086, 1474629.296925239264965 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "002°", "Distance": "7", "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 816421.176919471356086, 1474629.296925239264965 ], [ 816447.343615264166147, 1461657.523884834488854 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "329°", "Distance": "74.0", "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 725210.788905039313249, 1614340.133534865221009 ], [ 801151.922034665360115, 1500110.99753502313979 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "253°", "Distance": "95.5", "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 557829.320185487973504, 1557263.371186414500698 ], [ 725210.788905039313249, 1614340.133534865221009 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": null, "Distance": null, "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 797493.845033834921196, 1461615.198407395277172 ], [ 816447.343615264166147, 1461657.523884834023193 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "92.34°", "Distance": null, "Altitude": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 797493.845033834921196, 1461615.198407395277172 ], [ 791134.002241569804028, 1461605.3845890739467 ] ] ] } }
+]
+}

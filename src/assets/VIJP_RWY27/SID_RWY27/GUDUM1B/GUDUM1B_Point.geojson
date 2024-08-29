@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "GUDUM1B_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "GUDUM", "Altitude": "+FL150", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.47241667, 25.96686111 ] } },
+{ "type": "Feature", "properties": { "Name": "JP007", "Altitude": "-FL080", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.680725, 26.54389444 ] } },
+{ "type": "Feature", "properties": { "Name": null, "Altitude": "+2000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.7783564090943, 26.821037308758562 ] } }
+]
+}

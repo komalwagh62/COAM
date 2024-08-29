@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "VEMBO7A_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL402", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.91941944, 13.20507778 ] } },
+{ "type": "Feature", "properties": { "Name": "LIGLO", "Altitude": "-FL110", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 78.10125, 13.55610556 ] } },
+{ "type": "Feature", "properties": { "Name": "VEMBO", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 78.84172222, 13.59166667 ] } },
+{ "type": "Feature", "properties": { "Name": null, "Altitude": "+3400", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.744703655038094, 13.206630068928131 ] } }
+]
+}

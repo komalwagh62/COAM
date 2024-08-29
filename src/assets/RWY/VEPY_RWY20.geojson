@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "VEPY_RWY20",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Desgtn": "20", "True_B": "205.37°" }, "geometry": { "type": "Point", "coordinates": [ 88.59222222,27.2397222222222 ] } }
+]
+}

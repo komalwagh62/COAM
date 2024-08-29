@@ -1,0 +1,23 @@
+{
+    "type": "FeatureCollection",
+    "name": "RNP_Y_RWY_27R_Point",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Name": "DOXIT", "Altitude": "+FL085", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.19991389, 13.30387778 ] } },
+    { "type": "Feature", "properties": { "Name": "BL954", "Altitude": "+6000.00", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.03966389, 13.232675 ] } },
+    { "type": "Feature", "properties": { "Name": "BL963", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98846667, 13.2044 ] } },
+    { "type": "Feature", "properties": { "Name": "BL953", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.93648611, 13.20489722 ] } },
+    { "type": "Feature", "properties": { "Name": "BL553", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98823611, 13.30795833 ] } },
+    { "type": "Feature", "properties": { "Name": "BL951", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.9884, 13.23360278 ] } },
+    { "type": "Feature", "properties": { "Name": "BL558", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98765, 13.10454167 ] } },
+    { "type": "Feature", "properties": { "Name": "BL952", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98817222, 13.17499722 ] } },
+    { "type": "Feature", "properties": { "Name": "BL559", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.03888333, 13.10406944 ] } },
+    { "type": "Feature", "properties": { "Name": "BL955", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.03947778, 13.17485278 ] } },
+    { "type": "Feature", "properties": { "Name": "BL554", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.03951389, 13.30753611 ] } },
+    { "type": "Feature", "properties": { "Name": "APERU", "Altitude": null, "Speed": "MAX IAS 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.67575556, 13.31061667 ] } },
+    { "type": "Feature", "properties": { "Name": "BL962", "Altitude": "+6000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.88519722, 13.20537778 ] } },
+    { "type": "Feature", "properties": { "Name": "RW27R", "Altitude": "+2976", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.72296944, 13.20684722 ] } },
+    { "type": "Feature", "properties": { "Name": null, "Altitude": "+3500", "Speed": "MAX IAS 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.673856613353621, 13.207271791168614 ] } }
+    ]
+    }
+    

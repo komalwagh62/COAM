@@ -1,0 +1,13 @@
+{
+    "type": "FeatureCollection",
+    "name": "Point_SID",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+{ "type": "Feature", "properties": { "Name": "BUBNU", "Altitude": "+FL120", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.0719444, 26.4402778 ] } },
+{ "type": "Feature", "properties": { "Name": "JP402", "Altitude": "+3800", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.5500417, 26.79935 ] } },
+{ "type": "Feature", "properties": { "Name": "JP529", "Altitude": "+FL110", "Speed": "MAX IAS 220Kt" }, "geometry": { "type": "Point", "coordinates": [ 75.19755, 26.4656778 ] } },
+{ "type": "Feature", "properties": { "Name": "JP530", "Altitude": "+FL090", "Speed": "MAX IAS 220Kt" }, "geometry": { "type": "Point", "coordinates": [ 75.3170278, 26.5696389 ] } },
+{ "type": "Feature", "properties": { "Name": "JP545", "Altitude": "-FL070", "Speed": "+5000" }, "geometry": { "type": "Point", "coordinates": [ 75.4168917, 26.6688361 ] } },
+{ "type": "Feature", "properties": { "Name": "JP546", "Altitude": "+5000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.4029083, 26.7851639 ] } }
+]
+}

@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "SUSIK7E_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL454", "Altitude": "+7000", "Speed": "MAX 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.4587222, 13.3122361 ] } },
+{ "type": "Feature", "properties": { "Name": "BL456", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.4552528, 13.418 ] } },
+{ "type": "Feature", "properties": { "Name": "RIGBA", "Altitude": null, "Speed": "MAX 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.3894472, 13.5848222 ] } },
+{ "type": "Feature", "properties": { "Name": "BL704", "Altitude": "-FL140", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.2527556, 13.7956861 ] } },
+{ "type": "Feature", "properties": { "Name": "BL805", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.1092389, 14.0165917 ] } },
+{ "type": "Feature", "properties": { "Name": "GOMIL", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.9781, 14.2179944 ] } },
+{ "type": "Feature", "properties": { "Name": "SUSIK", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.1656389, 14.4012778 ] } }
+]
+}

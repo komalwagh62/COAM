@@ -1,0 +1,13 @@
+{
+    "type": "FeatureCollection",
+    "name": "LEKAP7E_Line",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Distance": "91.27", "Bearing": "296.39°" }, "geometry": { "type": "LineString", "coordinates": [ [ 79.5985556, 12.0848056 ], [ 78.1864806, 12.7236389 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "20.36", "Bearing": "296.32°" }, "geometry": { "type": "LineString", "coordinates": [ [ 78.1864806, 12.7236389 ], [ 77.8704861, 12.8651472 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "10.39", "Bearing": "271.99°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.7731944, 13.105675 ], [ 77.5957333, 13.1062167 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "15.46", "Bearing": "340.19°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.8704861, 12.8651472 ], [ 77.7731944, 13.105675 ] ] } },
+    { "type": "Feature", "properties": { "Distance": "11.06", "Bearing": "272.12°" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.5957333, 13.1062167 ], [ 77.4068944, 13.1071972 ] ] } }
+    ]
+    }
+    

@@ -1,0 +1,10 @@
+{
+"type": "FeatureCollection",
+"name": "LOVGA1D_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "78.10°", "Distance": "18.68" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 76.08381389, 26.84949722 ], [ 76.42493056, 26.91225833 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "65.07°", "Distance": "16.51" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 76.42493056, 26.91225833 ], [ 76.705, 27.02721111 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "83.65°", "Distance": "13.51" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 76.08381389, 26.84949722 ], [ 75.79928333, 26.82302222 ] ] ] } }
+]
+}

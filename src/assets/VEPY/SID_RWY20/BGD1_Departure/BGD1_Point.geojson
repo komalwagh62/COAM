@@ -1,0 +1,13 @@
+{
+    "type": "FeatureCollection",
+    "name": "BDG1_Point",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Name": "BGD", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 88.32611111, 26.68833333 ] } },
+    { "type": "Feature", "properties": { "Name": "PY001", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 88.56186389, 27.182475 ] } },
+    { "type": "Feature", "properties": { "Name": "PY301", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 88.44812222, 27.08261111 ] } },
+    { "type": "Feature", "properties": { "Name": "PY302", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 88.36584167, 26.89522222 ] } },
+    { "type": "Feature", "properties": { "Name": null, "Altitude": "+5100", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 88.58133394172728, 27.219257897023695 ] } }
+    ]
+    }
+    

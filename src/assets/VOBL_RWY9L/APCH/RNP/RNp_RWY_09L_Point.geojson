@@ -1,0 +1,21 @@
+{
+    "type": "FeatureCollection",
+    "name": "RNp_RWY_09L_Point",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Name": "ATPUK", "Altitude": "+FL085", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.26807778, 13.17059722 ] } },
+    { "type": "Feature", "properties": { "Name": "BL905", "Altitude": "+7000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.35643611, 13.20978056 ] } },
+    { "type": "Feature", "properties": { "Name": "BL109", "Altitude": "+6000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.4579, 13.20902222 ] } },
+    { "type": "Feature", "properties": { "Name": "BL458", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.35565833, 13.10746111 ] } },
+    { "type": "Feature", "properties": { "Name": "BL453", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.40690833, 13.31271389 ] } },
+    { "type": "Feature", "properties": { "Name": "BL941", "Altitude": "+6000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.40708611, 13.23828056 ] } },
+    { "type": "Feature", "properties": { "Name": "BL459", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.40689444, 13.10719722 ] } },
+    { "type": "Feature", "properties": { "Name": "BL942", "Altitude": "+7000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.407225, 13.18086389 ] } },
+    { "type": "Feature", "properties": { "Name": "BL912", "Altitude": "+7000", "Speed": "MAX IAS 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.76590833, 13.30949722 ] } },
+    { "type": "Feature", "properties": { "Name": "BL454", "Altitude": "+7000", "Speed": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.45872222, 13.31223611 ] } },
+    { "type": "Feature", "properties": { "Name": "BL961", "Altitude": "+6000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.52832778, 13.20846944 ] } },
+    { "type": "Feature", "properties": { "Name": "RW09L", "Altitude": "+3059", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.68607222, 13.20716389 ] } },
+    { "type": "Feature", "properties": { "Name": null, "Altitude": "+3700", "Speed": "MAX IAS 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.765088408722761, 13.206473398575278 ] } }
+    ]
+    }
+    

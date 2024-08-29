@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "RNP_Y_RWY27L_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL923", "Altitude": "+5000", "Speed": null, "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.93575556, 13.18751389 ] } },
+{ "type": "Feature", "properties": { "Name": "BL921", "Altitude": "+5000", "Speed": null, "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.83321944, 13.18847222 ] } },
+{ "type": "Feature", "properties": { "Name": "RW27L", "Altitude": "+3017", "Speed": null, "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.72687222, 13.18941389 ] } },
+{ "type": "Feature", "properties": { "Name": "BL552", "Altitude": "-FL080", "Speed": "+6000", "Speed1": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.93695833, 13.30842222 ] } },
+{ "type": "Feature", "properties": { "Name": "BL558", "Altitude": "-FL090", "Speed": "+7000", "Speed1": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98765, 13.10454167 ] } },
+{ "type": "Feature", "properties": { "Name": "BL920", "Altitude": "+7000", "Speed": "MAX IAS 185Kt", "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.987675, 13.18701389 ] } },
+{ "type": "Feature", "properties": { "Name": "BL901", "Altitude": null, "Speed": "MAX IAS 210Kt", "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.44801111, 13.19168056 ] } },
+{ "type": "Feature", "properties": { "Name": "BL902", "Altitude": null, "Speed": "MAX IAS 210Kt", "Speed1": null }, "geometry": { "type": "Point", "coordinates": [ 77.44896667, 13.31261667 ] } },
+{ "type": "Feature", "properties": { "Name": "DOXIT", "Altitude": "-FL120", "Speed": "+FL085", "Speed1": "MAX IAS 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 78.19991389, 13.30387778 ] } }
+]
+}

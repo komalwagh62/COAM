@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "OPAMO7C_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "92.38°", "Distance": "5.96" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.81761667, 13.20601111 ], [ 77.91941944, 13.20507778 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "2.39°", "Distance": "7.00" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.91941944, 13.20507778 ], [ 77.92057778, 13.322225 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "331.55°", "Distance": "16.03" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.92057778, 13.322225 ], [ 77.78241667, 13.56040833 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "328.72°", "Distance": "74.03" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.78241667, 13.56040833 ], [ 77.09052778, 14.59294444 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "", "Distance": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.731476202654832, 13.189110134099282 ], [ 77.81761667, 13.20601111 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "92.34°", "Distance": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.731476202654832, 13.18911013409928 ], [ 77.68997778, 13.18973333 ] ] ] } }
+]
+}

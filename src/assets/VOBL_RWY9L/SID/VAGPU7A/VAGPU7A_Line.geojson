@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "VAGPU7A_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "332°", "Distance": "16", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.7824167, 13.55395 ], [ 77.9205778, 13.322225 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "02°", "Distance": "7", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.9205778, 13.322225 ], [ 77.9194194, 13.2050778 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "342°", "Distance": "8.69", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 76.6869444, 15.6933333 ], [ 77.0905278, 14.5929444 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "329°", "Distance": "74.0", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.0905278, 14.5929444 ], [ 77.7824167, 13.55395 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": null, "Distance": null, "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.91941944, 13.20507778 ], [ 77.744703655038094, 13.206630068928131 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "92.34°", "Distance": null, "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.744703655038094, 13.206630068928131 ], [ 77.68607222, 13.20716389 ] ] } }
+]
+}

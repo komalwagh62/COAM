@@ -1,0 +1,12 @@
+{
+"type": "FeatureCollection",
+"name": "SUSIK7J_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "149°", "Distance": "14.9", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.2527556, 13.7956861 ], [ 77.3894472, 13.5848222 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "161°", "Distance": "10.7", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.3894472, 13.5848222 ], [ 77.4552528, 13.418 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "180°", "Distance": "6.3", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.4552528, 13.418 ], [ 77.4587222, 13.3122361 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "130°", "Distance": "56.2", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 76.1656389, 14.4012778 ], [ 76.9263139, 13.8240639 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "097°", "Distance": "19.1", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 76.9263139, 13.8240639 ], [ 77.2527556, 13.7956861 ] ] } }
+]
+}

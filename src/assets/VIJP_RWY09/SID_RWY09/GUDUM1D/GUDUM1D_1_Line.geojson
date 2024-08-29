@@ -1,0 +1,11 @@
+{
+    "type": "FeatureCollection",
+    "name": "GUDUM1D_Line",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Bearing": "211.25°", "Distance": "40.53" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 75.98355, 26.72269167 ], [ 75.58799722, 26.14641944 ] ] ] } },
+    { "type": "Feature", "properties": { "Bearing": "209.77°", "Distance": "12.42" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 75.58799722, 26.14641944 ], [ 75.47241667, 25.96686111 ] ] ] } },
+    { "type": "Feature", "properties": { "Bearing": "", "Distance": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 75.98355, 26.72269167 ], [ 75.846891033489584, 26.827524153200127 ] ] ] } },
+    { "type": "Feature", "properties": { "Bearing": "83.65°", "Distance": null }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 75.846891033489584, 26.827524153200127 ], [ 75.79928333, 26.82302222 ] ] ] } }
+    ]
+    }

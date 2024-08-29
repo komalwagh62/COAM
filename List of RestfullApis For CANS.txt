@@ -1,0 +1,18 @@
+List of RestfullApis For CANS
+
+1. Sign up/Login/Update user Details
+2. Forget Password 3rd Party SMTP-API for OTP  Email
+3. Payment Gateway 3rd Party API for payment
+4. Geoserver/Sub-Geoserver 
+	4.1 Waypoint
+	4.2 Navaids
+	4.3 PRD areas
+	4.4 Controlled Airspace
+	4.5 Grid
+	4.6 Obstacle 
+5. Airport/Runway/Type of Procedure/Procedure Name List data API
+6. Multiple Base Map
+7. AWS/Current & previous AIRAC DB/ AIXM & ARNIC 424/Any Aeronautical data to be called in Frontend
+8. State Charts
+9. Import Data Form Excel,CSV,GeoJson etc- update delete 
+10.Record Activity As log

@@ -1,0 +1,16 @@
+{
+    "type": "FeatureCollection",
+    "name": "Point_SID",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+{ "type": "Feature", "properties": { "Name": "LOVGA", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.705, 27.0272111 ] } },
+{ "type": "Feature", "properties": { "Name": "JP003", "Altitude": "+FL130", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.329625, 27.0528028 ] } },
+{ "type": "Feature", "properties": { "Name": "JP402", "Altitude": "+3800", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.5500417, 26.79935 ] } },
+{ "type": "Feature", "properties": { "Name": "JP403", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.536175, 26.9156889 ] } },
+{ "type": "Feature", "properties": { "Name": "JP535", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.5311611, 27.0174417 ] } },
+{ "type": "Feature", "properties": { "Name": "JP540", "Altitude": "+FL120", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.0930861, 27.0950667 ] } },
+{ "type": "Feature", "properties": { "Name": "JP546", "Altitude": "+5000", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.4029083, 26.7851639 ] } },
+{ "type": "Feature", "properties": { "Name": "JP547", "Altitude": "-FL070", "Speed": "+5000" }, "geometry": { "type": "Point", "coordinates": [ 75.3891, 26.8997778 ] } },
+{ "type": "Feature", "properties": { "Name": "LEVMU", "Altitude": "+FL100", "Speed": "MAX IAS 220Kt" }, "geometry": { "type": "Point", "coordinates": [ 75.7483944, 27.0762694 ] } }
+]
+}

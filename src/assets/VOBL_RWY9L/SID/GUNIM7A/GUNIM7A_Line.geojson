@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "GUNIM7A_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "294°", "Distance": "68.6", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 75.5356944, 14.0856389 ], [ 76.6248583, 13.6531083 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "278°", "Distance": "50.3", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 76.6248583, 13.6531083 ], [ 77.480375, 13.5604083 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "273°", "Distance": "17.7", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.480375, 13.5604083 ], [ 77.7824167, 13.55395 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "332°", "Distance": "16", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.7824167, 13.55395 ], [ 77.9205778, 13.322225 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "02°", "Distance": "7", "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.9205778, 13.322225 ], [ 77.9194194, 13.2050778 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": null, "Distance": null, "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.744703655038094, 13.206630068928131 ], [ 77.91941944, 13.20507778 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "92.34°", "Distance": null, "Altitude": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.744703655038094, 13.206630068928131 ], [ 77.68607222, 13.20716389 ] ] } }
+]
+}

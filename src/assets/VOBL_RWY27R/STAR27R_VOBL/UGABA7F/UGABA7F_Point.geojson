@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "UGABA7F_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL557", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.8627444, 13.1053222 ] } },
+{ "type": "Feature", "properties": { "Name": "BL558", "Altitude": "+7000", "Speed": "MAX 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.98765, 13.1045417 ] } },
+{ "type": "Feature", "properties": { "Name": "UGABA", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.2915028, 12.1497611 ] } },
+{ "type": "Feature", "properties": { "Name": "MUGPA", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.4732972, 12.5869806 ] } },
+{ "type": "Feature", "properties": { "Name": "RUBOX", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.6025861, 12.8969444 ] } },
+{ "type": "Feature", "properties": { "Name": "BL556", "Altitude": "+FL120", "Speed": "MAX 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.6903694, 13.1065167 ] } }
+]
+}

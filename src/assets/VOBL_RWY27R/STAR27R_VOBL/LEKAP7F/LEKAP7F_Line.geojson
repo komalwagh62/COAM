@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "LEKAP7F_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "296°", "Distance": "91.3" }, "geometry": { "type": "LineString", "coordinates": [ [ 79.5985556, 12.0848056 ], [ 78.1864806, 12.7236389 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "296°", "Distance": "20.4" }, "geometry": { "type": "LineString", "coordinates": [ [ 78.1864806, 12.7236389 ], [ 77.8704861, 12.8651472 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "002°", "Distance": "14.4" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.8704861, 12.8651472 ], [ 77.8627444, 13.1053222 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "092°", "Distance": "7.3" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.8627444, 13.1053222 ], [ 77.98765, 13.1045417 ] ] } }
+]
+}

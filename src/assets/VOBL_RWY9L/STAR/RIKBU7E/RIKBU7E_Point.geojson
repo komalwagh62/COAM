@@ -1,0 +1,15 @@
+{
+    "type": "FeatureCollection",
+    "name": "RIKBU7E_Point",
+    "crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+    "features": [
+    { "type": "Feature", "properties": { "Name": "BL454", "Altitude": "+7000", "Speed": "MAX 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.45872222, 13.31223611 ] } },
+    { "type": "Feature", "properties": { "Name": "RIKBU", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.35944444, 15.16583333 ] } },
+    { "type": "Feature", "properties": { "Name": "BL456", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.45525278, 13.418 ] } },
+    { "type": "Feature", "properties": { "Name": "RIGBA", "Altitude": null, "Speed": "MAX 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.38944722, 13.58482222 ] } },
+    { "type": "Feature", "properties": { "Name": "BL704", "Altitude": "-FL140", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.25275556, 13.79568611 ] } },
+    { "type": "Feature", "properties": { "Name": "BL805", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.10923889, 14.01659167 ] } },
+    { "type": "Feature", "properties": { "Name": "GOMIL", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.9781, 14.21799444 ] } }
+    ]
+    }
+    

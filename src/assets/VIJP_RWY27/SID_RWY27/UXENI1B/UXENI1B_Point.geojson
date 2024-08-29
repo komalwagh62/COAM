@@ -1,0 +1,11 @@
+{
+"type": "FeatureCollection",
+"name": "UXENI1B_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "JP402", "Altitude": "+3800", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.55004167, 26.79935 ] } },
+{ "type": "Feature", "properties": { "Name": "JP410", "Altitude": "+FL090", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.37584444, 26.77762222 ] } },
+{ "type": "Feature", "properties": { "Name": "JP442", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 75.01500833, 26.73196389 ] } },
+{ "type": "Feature", "properties": { "Name": "UXENI", "Altitude": "-FL130", "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 74.89310833, 26.63688333 ] } }
+]
+}

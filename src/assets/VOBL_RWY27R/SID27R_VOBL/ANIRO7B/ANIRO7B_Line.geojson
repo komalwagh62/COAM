@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "ANIRO7B_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "088°", "Distance": "13.0" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.6377333, 13.5239972 ], [ 77.8589111, 13.5394278 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "088°", "Distance": "14.2" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.8589111, 13.5394278 ], [ 78.10125, 13.5561056 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "048°", "Distance": "41.2" }, "geometry": { "type": "LineString", "coordinates": [ [ 78.10125, 13.5561056 ], [ 78.6083889, 14.0360444 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "032°", "Distance": "14.9" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.5087333, 13.3094139 ], [ 77.6377333, 13.5239972 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": null, "Distance": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.50873333, 13.30941389 ], [ 77.653200268170011, 13.207514563835101 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "272.34°", "Distance": null }, "geometry": { "type": "LineString", "coordinates": [ [ 77.653200268170011, 13.207514563835097 ], [ 77.72296944, 13.20684722 ] ] } }
+]
+}

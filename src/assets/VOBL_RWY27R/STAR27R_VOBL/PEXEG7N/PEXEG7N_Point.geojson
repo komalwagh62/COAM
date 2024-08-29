@@ -1,0 +1,13 @@
+{
+"type": "FeatureCollection",
+"name": "PEXEG7N_Point",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Name": "BL552", "Altitude": "+7000", "Speed": "MAX 185Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.9369583, 13.3084222 ] } },
+{ "type": "Feature", "properties": { "Name": "PEXEG", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.0417222, 13.0708611 ] } },
+{ "type": "Feature", "properties": { "Name": "BL807", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 76.6833889, 13.1237833 ] } },
+{ "type": "Feature", "properties": { "Name": "ATPUK", "Altitude": "+FL150", "Speed": "MAX 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.2680778, 13.1705972 ] } },
+{ "type": "Feature", "properties": { "Name": "DUBEL", "Altitude": "+FL120", "Speed": "MAX 210Kt" }, "geometry": { "type": "Point", "coordinates": [ 77.5964028, 13.3112083 ] } },
+{ "type": "Feature", "properties": { "Name": "APERU", "Altitude": null, "Speed": null }, "geometry": { "type": "Point", "coordinates": [ 77.6757556, 13.3106167 ] } }
+]
+}

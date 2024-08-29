@@ -1,0 +1,16 @@
+{
+"type": "FeatureCollection",
+"name": "RNP_Y_RWY27L_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "182.39°", "Distance": "7.22" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.93695833, 13.30842222 ], [ 77.93575556, 13.18751389 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "1.85°", "Distance": "4.93" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.98765, 13.10454167 ], [ 77.987675, 13.18701389 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "272.39°", "Distance": "3.04" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.987675, 13.18701389 ], [ 77.93575556, 13.18751389 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "272.37°", "Distance": "6.00" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.93575556, 13.18751389 ], [ 77.83321944, 13.18847222 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "272.34°", "Distance": "6.23" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.83321944, 13.18847222 ], [ 77.72687222, 13.18941389 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "272.34°", "Distance": "16.32" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.72687222, 13.18941389 ], [ 77.44801111, 13.19168056 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "2.28°", "Distance": "7.22" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.44801111, 13.19168056 ], [ 77.44896667, 13.31261667 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "92.39°", "Distance": "28.55" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 77.44896667, 13.31261667 ], [ 77.93695833, 13.30842222 ] ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "242.47°", "Distance": "14.25" }, "geometry": { "type": "MultiLineString", "coordinates": [ [ [ 78.19991389, 13.30387778 ], [ 77.987675, 13.18701389 ] ] ] } }
+]
+}

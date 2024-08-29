@@ -1,0 +1,8 @@
+{
+"type": "FeatureCollection",
+"name": "VOBL_RWY27L",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Desgtn": "27L", "True_B": "270.5°" }, "geometry": { "type": "Point", "coordinates": [ 77.72687222, 13.18941389 ] } }
+]
+}

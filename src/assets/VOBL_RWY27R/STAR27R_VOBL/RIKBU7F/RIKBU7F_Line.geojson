@@ -1,0 +1,14 @@
+{
+"type": "FeatureCollection",
+"name": "RIKBU7F_Line",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:OGC:1.3:CRS84" } },
+"features": [
+{ "type": "Feature", "properties": { "Bearing": "149°", "Distance": "14.2" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.1092389, 14.0165917 ], [ 76.9781, 14.2179944 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "149°", "Distance": "15.6" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.1092389, 14.0165917 ], [ 77.2527556, 13.7956861 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "149°", "Distance": "14.9" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.2527556, 13.7956861 ], [ 77.3894472, 13.5848222 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "145°", "Distance": "20.3" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.3894472, 13.5848222 ], [ 77.5964028, 13.3112083 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "092°", "Distance": "4.6" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.5964028, 13.3112083 ], [ 77.6757556, 13.3106167 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "092°", "Distance": "15.3" }, "geometry": { "type": "LineString", "coordinates": [ [ 77.6757556, 13.3106167 ], [ 77.9369583, 13.3084222 ] ] } },
+{ "type": "Feature", "properties": { "Bearing": "149°", "Distance": "67.1" }, "geometry": { "type": "LineString", "coordinates": [ [ 76.3594444, 15.1658333 ], [ 76.9781, 14.2179944 ] ] } }
+]
+}
