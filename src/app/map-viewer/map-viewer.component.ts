@@ -1,6 +1,6 @@
 import { Component, OnInit } from '@angular/core';
 
-declare var ol: any; // Declare OpenLayers globally
+declare var ol: any;
 
 @Component({
   selector: 'app-map-viewer',
@@ -8,6 +8,7 @@ declare var ol: any; // Declare OpenLayers globally
   styleUrls: ['./map-viewer.component.scss']
 })
 export class MapViewerComponent implements OnInit {
+  // Form fields for filtering
   trackMagnetic: string = '';
   airwayId: string = '';
   upperLimit: string = '';
@@ -18,14 +19,20 @@ export class MapViewerComponent implements OnInit {
   vectorLayer: any;
   iconLayer: any;
   conventionalAirwaysLayer: any;
-  nonConventionalAirwaysLayer:any;
+  nonConventionalAirwaysLayer: any;
+  waypointsPoint: any;
+  navaidsData: any;
+  controlAirspaceLayer: any;
+  restrictedAirspaceLayer: any;
+  aerodromeObstacleLayer: any;
   popup: any;
   filterPopupVisible: boolean = false;
   menuOpen: boolean = false;
-  zoomThreshold: number = 10;
+  zoomThreshold: number = 8;
+  conventionalIconLayer: any;
+  nonConventionalIconLayer: any;
 
   constructor() { }
-
   ngOnInit(): void {
     this.initMap();
   }
@@ -49,7 +56,6 @@ export class MapViewerComponent implements OnInit {
       target: 'map'
     });
 
-    // Initialize popup
     this.popup = new ol.Overlay({
       element: document.getElementById('popup'),
       autoPan: true,
@@ -58,40 +64,222 @@ export class MapViewerComponent implements OnInit {
       }
     });
     this.map.addOverlay(this.popup);
-
     this.conventionalAirwaysLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
-      style: new ol.style.Style({
-        stroke: new ol.style.Stroke({
-          color: 'black',
-          width: 2
-        })
-      })
     });
     this.map.addLayer(this.conventionalAirwaysLayer);
-  
-    // Initialize non-conventional airways layer
     this.nonConventionalAirwaysLayer = new ol.layer.Vector({
-      source: new ol.source.Vector()
+      source: new ol.source.Vector(),
     });
     this.map.addLayer(this.nonConventionalAirwaysLayer);
-  
-    // Hide layers initially
-    this.conventionalAirwaysLayer.setVisible(false);
-    this.nonConventionalAirwaysLayer.setVisible(false);
-  
-    // Add click event listener to the map for showing popup
+    this.addMapLayers();
     this.map.on('click', (event: any) => {
       this.displayFeatureInfo(event.coordinate);
     });
-
-    // Add moveend event listener to show/hide icons based on zoom level
+    this.waypointsPoint.setVisible(false);
+    this.navaidsData.setVisible(false);
+    this.controlAirspaceLayer.setVisible(false);
+    this.restrictedAirspaceLayer.setVisible(false);
+    this.aerodromeObstacleLayer.setVisible(false);
     this.map.on('moveend', () => {
       this.updateIconVisibility();
     });
-    
+
+    // Fit map to the bounds of India
+    const indiaExtent = ol.proj.transformExtent(
+      [68.1766451354, 7.96553477623, 97.4025614766, 35.4940095078],
+      'EPSG:4326',
+      this.map.getView().getProjection()
+    );
+    this.map.getView().fit(indiaExtent, { size: this.map.getSize() });
   }
 
+  addMapLayers(): void {
+    // Waypoints layer
+    this.waypointsPoint = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [] // Initially empty, add features later
+      }),
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: 'blue' }),
+          stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+        })
+      })
+    });
+
+    // Navaids layer
+    this.navaidsData = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [] // Initially empty, add features later
+      }),
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: 'green' }),
+          stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+        })
+      })
+    });
+    this.controlAirspaceLayer = new ol.layer.Vector({
+      source: new ol.source.Vector({
+        features: [] // Initially empty, add features later
+      }),
+      style: new ol.style.Style({
+        image: new ol.style.Circle({
+          radius: 5,
+          fill: new ol.style.Fill({ color: 'blue' }),
+          stroke: new ol.style.Stroke({ color: 'white', width: 2 })
+        })
+      })
+    });
+
+    this.restrictedAirspaceLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: 'red',
+          width: 2,
+          lineDash: [10, 10], // Dashed line to indicate restricted airspace
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 0.2)' // Semi-transparent fill
+        })
+      })
+    });
+
+    this.aerodromeObstacleLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+      style: new ol.style.Style({
+        stroke: new ol.style.Stroke({
+          color: 'green',
+          width: 2,
+          lineDash: [10, 10], // Dashed line to indicate restricted airspace
+        }),
+        fill: new ol.style.Fill({
+          color: 'rgba(255, 0, 0, 0.2)' // Semi-transparent fill
+        })
+      })
+    });
+
+    // Conventional airways layer
+    this.conventionalAirwaysLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+    });
+
+    // Non-conventional airways layer
+    this.nonConventionalAirwaysLayer = new ol.layer.Vector({
+      source: new ol.source.Vector(),
+    });
+
+    // Add layers to the map
+    this.map.addLayer(this.waypointsPoint);
+    this.map.addLayer(this.navaidsData);
+    this.map.addLayer(this.conventionalAirwaysLayer);
+    this.map.addLayer(this.nonConventionalAirwaysLayer);
+    this.map.addLayer(this.controlAirspaceLayer);
+    this.map.addLayer(this.restrictedAirspaceLayer);
+    this.map.addLayer(this.aerodromeObstacleLayer);
+  }
+
+  addGeoJSONToConventionalAirwaysLayer(geojson: any, conventionalAirwaysLayer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojson, {
+        featureProjection: 'EPSG:3857'
+      })
+    });
+
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'black',
+        width: 2
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      feature.setStyle(style);
+    });
+
+    this.conventionalAirwaysLayer.setSource(vectorSource);
+    this.map.getView().fit(vectorSource.getExtent(), {
+      padding: [50, 50, 50, 50],
+      maxZoom: 8
+    });
+
+    // Create and add icon features for conventional airways
+    const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
+    const iconSource = new ol.source.Vector({
+      features: iconFeatures
+    });
+
+    // Create separate icon layer for conventional airways
+    this.conventionalIconLayer = new ol.layer.Vector({
+      source: iconSource
+    });
+    this.map.addLayer(this.conventionalIconLayer);
+
+    this.updateIconVisibility();
+  }
+
+  addGeoJSONToNonConventionalAirwaysLayer(geojson: any, nonConventionalAirwaysLayer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojson, {
+        featureProjection: 'EPSG:3857'
+      })
+    });
+
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'blue',
+        width: 1
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      feature.setStyle(style);
+    });
+
+    this.nonConventionalAirwaysLayer.setSource(vectorSource);
+    this.map.getView().fit(vectorSource.getExtent(), {
+      padding: [50, 50, 50, 50],
+      maxZoom: 5
+    });
+
+    // Create and add icon features for non-conventional airways
+    const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
+    const iconSource = new ol.source.Vector({
+      features: iconFeatures
+    });
+
+    // Create separate icon layer for non-conventional airways
+    this.nonConventionalIconLayer = new ol.layer.Vector({
+      source: iconSource
+    });
+    this.map.addLayer(this.nonConventionalIconLayer);
+
+    this.updateIconVisibility();
+  }
+
+  updateIconVisibility(): void {
+    const zoom = this.map.getView().getZoom();
+
+    // Show/hide icons based on zoom level
+    if (this.conventionalIconLayer) {
+      this.conventionalIconLayer.setVisible(zoom > this.zoomThreshold);
+    }
+    if (this.nonConventionalIconLayer) {
+      this.nonConventionalIconLayer.setVisible(zoom > this.zoomThreshold);
+    }
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+    if (!this.menuOpen) {
+      // Close the filter popup if menu is closed
+      this.filterPopupVisible = false;
+    }
+  }
   fetchGeoJSONData(url: string): Promise<any> {
     return fetch(url)
       .then(response => {
@@ -109,63 +297,12 @@ export class MapViewerComponent implements OnInit {
       });
   }
 
-  addGeoJSONToMap(geojson: any): void {
-    const vectorSource = new ol.source.Vector({
-      features: new ol.format.GeoJSON().readFeatures(geojson, {
-        featureProjection: 'EPSG:3857'
-      })
-    });
-
-    // Remove existing vectorLayer and iconLayer from the map
-    if (this.vectorLayer) {
-      this.map.removeLayer(this.vectorLayer);
-    }
-    if (this.iconLayer) {
-      this.map.removeLayer(this.iconLayer);
-    }
-
-    this.vectorLayer = new ol.layer.Vector({
-      source: vectorSource
-    });
-
-    this.map.addLayer(this.vectorLayer);
-
-    // Fit the map view to the extent of the GeoJSON data
-    this.map.getView().fit(vectorSource.getExtent(), {
-      padding: [50, 50, 50, 50],
-      maxZoom: 15
-    });
-
-    // Create icons for each line feature
-    const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
-
-    // Create a vector source and layer for icons
-    const iconSource = new ol.source.Vector({
-      features: iconFeatures
-    });
-
-    this.iconLayer = new ol.layer.Vector({
-      source: iconSource
-    });
-
-    this.map.addLayer(this.iconLayer);
-
-    // Update icon visibility based on initial zoom level
-    this.updateIconVisibility();
-  }
-
-  
-  
   createIconFeatures(features: any[]): any[] {
     const iconFeatures: any[] = [];
-    const overlapDistance = 100; // Adjust as needed based on your map scale
-  
-    // Helper function to calculate distance between two points
+    const overlapDistance = 100;
     const calculateDistance = (point1: number[], point2: number[]): number => {
       return Math.sqrt(Math.pow(point1[0] - point2[0], 2) + Math.pow(point1[1] - point2[1], 2));
     };
-  
-    // Helper function to find a new position when overlap is detected
     const findNewPositionAlongLine = (midPoint: number[], startPoint: number[], endPoint: number[], index: number): number[] => {
       const directionVector = [
         endPoint[0] - startPoint[0],
@@ -178,163 +315,121 @@ export class MapViewerComponent implements OnInit {
       const newY = midPoint[1] + offset * unitVector[1];
       return [newX, newY];
     };
-  
     features.forEach((feature: any, index: number) => {
       const geometry = feature.getGeometry();
       const coordinates = geometry.getCoordinates();
       const startPoint = coordinates[0];
       const endPoint = coordinates[coordinates.length - 1];
-  
-      // Calculate midpoint
       const midPoint = [
         (startPoint[0] + endPoint[0]) / 2,
         (startPoint[1] + endPoint[1]) / 2
       ];
-  
-      // Example track magnetic value
-      const trackMagnetic = parseFloat(feature.get('track_magnetic')); // Replace with actual track_magnetic value
-  
-      // Convert degrees to radians and adjust for OpenLayers rotation (clockwise from positive x-axis)
+      const trackMagnetic = parseFloat(feature.get('track_magnetic'));
       const angle = (trackMagnetic - 90) * (Math.PI / 180);
-  
-      // Ensure text is always upright and readable
       let textAngle = angle;
       if (textAngle > Math.PI / 2 || textAngle < -Math.PI / 2) {
-        textAngle += Math.PI; // Flip the text angle
+        textAngle += Math.PI;
       }
-  
-      // Determine icon based on direction of cruising levels
       const directionOfCruisingLevels = feature.get('direction_of_cruising_levels');
-      let iconSrc = ''; // Default icon
+      let iconSrc = '';
       if (directionOfCruisingLevels === 'Forward' || directionOfCruisingLevels === 'Backward') {
         iconSrc = 'assets/right-arrow.png';
       } else {
         iconSrc = 'assets/rectangle.png';
       }
-  
-      // Check if iconSrc is correctly set
       if (!iconSrc) {
         console.error('Icon source is not set correctly');
         return;
       }
-  
-      // Create icon feature
       const iconFeature = new ol.Feature({
         geometry: new ol.geom.Point(midPoint)
       });
-  
-      // Style for icon
       const iconStyle = new ol.style.Style({
         image: new ol.style.Icon({
           src: iconSrc,
-          anchor: [0.5, 0.5], // Center the icon on the point
-          scale: 0.1, // Adjust scale to decrease size (smaller value for smaller icons)
-          rotation: angle // Set the rotation of the icon
+          anchor: [0.5, 0.5],
+          scale: 0.1,
+          rotation: angle
         })
       });
-  
-      // Add airway ID text to the icon
       const airwayIdStyle = new ol.style.Style({
         text: new ol.style.Text({
           text: feature.get('airway_id'),
-          font: 'bold 14px Calibri,sans-serif', // Increase font size and make it bold
-          textAlign: 'center', // Center align the text
-          textBaseline: 'middle', // Align text vertically to the middle
-          offsetX: 0, // No horizontal offset
-          offsetY: 0, // No vertical offset
+          font: 'bold 14px Calibri,sans-serif',
+          textAlign: 'center',
+          textBaseline: 'middle',
+          offsetX: 0,
+          offsetY: 0,
           fill: new ol.style.Fill({
             color: 'white'
           }),
-          rotation: textAngle // Set the rotation of the text to be always upright
+          rotation: textAngle
         })
       });
-  
-      // Add track magnetic text above the icon
       const trackMagneticStyle = new ol.style.Style({
         text: new ol.style.Text({
-          text: `${feature.get('radial_distance')}`, // Format track magnetic
-          font: '12px Calibri,sans-serif', // Font size for track magnetic
+          text: `${feature.get('radial_distance')}`,
+          font: '12px Calibri,sans-serif',
           textAlign: 'center',
           textBaseline: 'bottom',
           offsetX: 0,
-          offsetY: -20, // Adjust vertical offset to position above the icon
+          offsetY: -20,
           fill: new ol.style.Fill({
             color: '#000'
           }),
-          rotation: textAngle // Ensure text is upright
+          rotation: textAngle
         })
       });
-  
-      // Add lateral limit text below the icon
       const lateralLimitStyle = new ol.style.Style({
         text: new ol.style.Text({
           text: `${feature.get('mea')}`,
-          font: '12px Calibri,sans-serif', // Font size for lateral limit
+          font: '12px Calibri,sans-serif',
           textAlign: 'center',
           textBaseline: 'top',
           offsetX: 0,
-          offsetY: 20, // Adjust vertical offset to position below the icon
+          offsetY: 20,
           fill: new ol.style.Fill({
             color: '#000'
           }),
-          rotation: textAngle // Ensure text is upright
+          rotation: textAngle
         })
       });
-  
-      // Combine all styles into one style array
       iconFeature.setStyle([iconStyle, airwayIdStyle, trackMagneticStyle, lateralLimitStyle]);
-  
-      // Check for overlap with existing icons and adjust position
-      let overlapDetected = false;
-      for (let i = 0; i < iconFeatures.length; i++) {
-        const existingFeature = iconFeatures[i];
+      const overlap = iconFeatures.some(existingFeature => {
         const existingCoords = existingFeature.getGeometry().getCoordinates();
-        const distance = calculateDistance(existingCoords, midPoint);
-        if (distance < overlapDistance) {
-          overlapDetected = true;
-  
-          // Find a new position along the line
-          const newPosition = findNewPositionAlongLine(midPoint, startPoint, endPoint, index);
-  
-          // Set the new position for the icon feature
-          iconFeature.setGeometry(new ol.geom.Point(newPosition));
-          break;
-        }
+        const distance = calculateDistance(midPoint, existingCoords);
+        return distance < overlapDistance;
+      });
+      if (!overlap) {
+        iconFeatures.push(iconFeature);
+      } else {
+        const newMidPoint = findNewPositionAlongLine(midPoint, startPoint, endPoint, index);
+        iconFeature.getGeometry().setCoordinates(newMidPoint);
+        iconFeatures.push(iconFeature);
       }
-  
-      // Push the icon feature to the array
-      iconFeatures.push(iconFeature);
     });
-  
     return iconFeatures;
-  }
-  
-  
-  
-  updateIconVisibility(): void {
-    const zoom = this.map.getView().getZoom();
-    this.iconLayer.setVisible(zoom > this.zoomThreshold);
   }
 
   filterAndShowFeatures(type: string, trackMagnetic: string, airwayId: string, upperLimit: string, lowerLimit: string, mea: string, lateralLimits: string): void {
-    const url = new URL(type === 'conv' ? 'http://localhost:3002/convlinedata' : 'http://localhost:3002/nonconvlinedata');
+    const url = new URL(type === 'conv' ? 'http://localhost:3003/convlinedata' : 'http://localhost:3003/nonconvlinedata');
     const params: any = {};
-  
+
     if (trackMagnetic) params.track_magnetic = trackMagnetic;
     if (airwayId) params.airway_id = airwayId;
     if (upperLimit) params.upper_limit = upperLimit;
     if (lowerLimit) params.lower_limit = lowerLimit;
     if (mea) params.mea = mea;
     if (lateralLimits) params.lateral_limits = lateralLimits;
-  
+
     url.search = new URLSearchParams(params).toString();
-  
+
     this.fetchGeoJSONData(url.toString()).then(data => {
       if (data && data.features) {
         // Filter GeoJSON data based on conditions
         data.features = data.features.filter((feature: any) => {
           let match = true;
-  
+
           if (trackMagnetic && feature.properties.track_magnetic !== trackMagnetic) {
             match = false;
           }
@@ -353,21 +448,34 @@ export class MapViewerComponent implements OnInit {
           if (lateralLimits && feature.properties.lateral_limits !== lateralLimits) {
             match = false;
           }
-  
+
           return match;
         });
-  
+
         // Add filtered GeoJSON data to the appropriate layer
         if (type === 'conv') {
-          this.addGeoJSONToLayer(data, this.conventionalAirwaysLayer);
+          this.conventionalAirwaysLayer.getSource().clear(); // Clear existing features
+          this.addGeoJSONToLayer(this.conventionalAirwaysLayer, data);
         } else {
-          this.addGeoJSONToLayer(data, this.nonConventionalAirwaysLayer);
+          this.nonConventionalAirwaysLayer.getSource().clear(); // Clear existing features
+          this.addGeoJSONToLayer(this.nonConventionalAirwaysLayer, data);
         }
+
+        // Fit map to the new features
+        this.fitMapToLayer(type);
       }
+    }).catch(error => {
+      console.error('Error fetching or filtering GeoJSON data:', error);
     });
   }
-  
-
+  fitMapToLayer(type: string): void {
+    const layer = type === 'conv' ? this.conventionalAirwaysLayer : this.nonConventionalAirwaysLayer;
+    const extent = layer.getSource().getExtent();
+    this.map.getView().fit(extent, {
+      padding: [50, 50, 50, 50],
+      maxZoom: 15
+    });
+  }
   isLowerLimitLessThan(featureLowerLimit: string, inputLowerLimit: string): boolean {
     // Extract numerical part from featureLowerLimit and inputLowerLimit
     const featureValue = parseFloat(featureLowerLimit.split(' ')[1]);
@@ -377,11 +485,15 @@ export class MapViewerComponent implements OnInit {
     return featureValue < inputValue;
   }
 
+  closePopup(event: Event): void {
+    event.preventDefault(); // Prevent the default action
+    this.popup.setPosition(undefined);
+  }
+
   displayFeatureInfo(coordinate: any): void {
     const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
       return feature;
     });
-
     if (feature) {
       const properties = feature.getProperties();
       const displayProperties = [
@@ -417,113 +529,399 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined); // Hide popup if no feature is clicked
     }
   }
-
   closeFilterPopup(event: Event): void {
     event.preventDefault();
     this.filterPopupVisible = false;
-    this.menuOpen = false;
-    // Fetch and display conv data when filter popup is closed
-    this.loadConvData();
-  }
-
-  closePopup(event: Event): void {
-    event.preventDefault(); // Prevent the default action
-    this.popup.setPosition(undefined);
   }
 
   toggleFilterPopup(): void {
     this.filterPopupVisible = !this.filterPopupVisible;
   }
 
-  toggleMenu(): void {
-    this.menuOpen = !this.menuOpen;
-    if (!this.menuOpen) {
-      // Close the filter popup if menu is closed
-      this.filterPopupVisible = false;
-    }
-  }
-
   loadConvData(): void {
-    this.fetchGeoJSONData('http://localhost:3002/convlinedata').then(data => {
-      if (data && data.features) {
-        // Filter GeoJSON data to include only conv type features
-        data.features = data.features.filter((feature: any) => feature.properties.type === 'conv');
-        // Add filtered GeoJSON data to the map
-        this.addGeoJSONToMap(data);
+    this.fetchGeoJSONData('http://localhost:3003/api/convlinedata').then(data => {
+      if (data) {
+        this.addGeoJSONToConventionalAirwaysLayer(data, this.conventionalAirwaysLayer);
+      } else {
+        console.error('No conventional airway data found.');
       }
     });
   }
 
-  toggleConventionalAirwaysLayer(): void {
-    const isVisible = this.conventionalAirwaysLayer.getVisible();
-    
-    if (!isVisible) {
-      // Fetch GeoJSON data only if the layer is not visible
-      this.fetchGeoJSONData('http://localhost:3002/convlinedata').then(data => {
-        if (data) {
-          // Clear existing features
-          this.conventionalAirwaysLayer.getSource().clear();
-  
-          // Add GeoJSON data to the layer
-          this.addGeoJSONToLayer(data, this.conventionalAirwaysLayer);
-        }
-      });
-    }
-    
-    // Toggle visibility
-    this.conventionalAirwaysLayer.setVisible(!isVisible);
+  loadNonConvData(): void {
+    this.fetchGeoJSONData('http://localhost:3003/api/nonconvlinedata').then(data => {
+      if (data) {
+        this.addGeoJSONToNonConventionalAirwaysLayer(data, this.nonConventionalAirwaysLayer);
+      } else {
+        console.error('No non-conventional airway data found.');
+      }
+    });
   }
-  
 
-  toggleNonConventionalAirwaysLayer(): void {
-    const isVisible = this.nonConventionalAirwaysLayer.getVisible();
-    
+  toggleWaypoints(): void {
+    const isVisible = this.waypointsPoint.getVisible();
     if (!isVisible) {
-      // Fetch GeoJSON data only if the layer is not visible
-      this.fetchGeoJSONData('http://localhost:3002/nonconvlinedata').then(data => {
-        if (data) {
-          // Clear existing features
-          this.nonConventionalAirwaysLayer.getSource().clear();
-  
-          // Add GeoJSON data to the layer
-          this.addGeoJSONToLayer(data, this.nonConventionalAirwaysLayer);
+      this.fetchGeoJSONData('http://localhost:3003/api/waypointdata').then(data => {
+        if (data && data.features) {
+          this.waypointsPoint.getSource().clear();
+          this.addGeoJSONToWaypointLayerWithIcons(data, this.waypointsPoint);
         }
       });
     }
-    
-    // Toggle visibility
-    this.nonConventionalAirwaysLayer.setVisible(!isVisible);
+    this.waypointsPoint.setVisible(!isVisible);
   }
-  addGeoJSONToLayer(geojson: any, layer: any): void {
+
+  togglenavaids(): void {
+    const isVisible = this.navaidsData.getVisible();
+    if (!isVisible) {
+      this.fetchGeoJSONData('http://localhost:3003/api/navaiddata').then(data => {
+        if (data && data.features) {
+          this.navaidsData.getSource().clear();
+          this.addGeoJSONToNavaidLayerWithIcons(data, this.navaidsData);
+        }
+      });
+    }
+    this.navaidsData.setVisible(!isVisible);
+  }
+  toggleControlAirsapce(): void {
+    const isVisible = this.controlAirspaceLayer.getVisible();
+    if (!isVisible) {
+      this.fetchGeoJSONData('http://localhost:3003/api/controlairspace').then(data => {
+        if (data && data.features) {
+          this.controlAirspaceLayer.getSource().clear();
+          this.addGeoJSONToControlAirspaceLayerWithIcons(data, this.controlAirspaceLayer);
+        }
+      });
+    }
+    this.controlAirspaceLayer.setVisible(!isVisible);
+  }
+
+  toggleRestrictedAirsapce(): void {
+    const isVisible = this.restrictedAirspaceLayer.getVisible();
+    if (!isVisible) {
+      this.fetchGeoJSONData('http://localhost:3003/api/restrictedairspace').then(data => {
+        if (data && data.features) {
+          this.restrictedAirspaceLayer.getSource().clear();
+          this.addGeoJSONToRestrictedAirspaceLayerWithIcons(data, this.restrictedAirspaceLayer);
+        }
+      });
+    }
+    this.restrictedAirspaceLayer.setVisible(!isVisible);
+  }
+
+  toggleAerodromeObstacle(): void {
+    const isVisible = this.aerodromeObstacleLayer.getVisible();
+    if (!isVisible) {
+      this.fetchGeoJSONData('http://localhost:3003/api/aerodromeobstacle').then(data => {
+        if (data && data.features) {
+          console.log("hbjn")
+          this.aerodromeObstacleLayer.getSource().clear();
+          this.addGeoJSONToAerodromeObstacleLayerWithIcons(data, this.aerodromeObstacleLayer);
+        }
+      });
+    }
+    this.aerodromeObstacleLayer.setVisible(!isVisible);
+  }
+
+  addGeoJSONToWaypointLayerWithIcons(geojsonData: any, layer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojsonData, {
+        featureProjection: 'EPSG:3857' // Ensure correct projection
+      })
+    });
+
+    const iconStyle = new ol.style.Style({
+      image: new ol.style.Icon({
+        src: 'assets/triangle.png', // Path to your icon in the assets folder
+        scale: 0.05, // Adjust the scale as needed
+        anchor: [0.05, 1], // Anchor at the bottom center
+        iconSize: [5, 5],
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      // Apply the triangle style to all features
+      feature.setStyle(iconStyle);
+    });
+
+    layer.setSource(vectorSource);
+
+    // Add click event listener for waypoints
+    this.map.on('click', (event: { coordinate: any; }) => {
+      this.displayWaypointInfo(event.coordinate);
+    });
+  }
+
+  addGeoJSONToNavaidLayerWithIcons(geojsonData: any, layer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojsonData, {
+        featureProjection: 'EPSG:3857' // Ensure correct projection
+      })
+    });
+
+    const iconStyle = new ol.style.Style({
+      image: new ol.style.Icon({
+        src: 'assets/navaid_icon.png', // Path to your icon in the assets folder
+        scale: 0.05, // Adjust the scale as needed
+        anchor: [0.5, 1], // Anchor at the bottom center
+        iconSize: [20, 30],
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      // Apply the icon style only to specific geometries or all features
+      feature.setStyle(iconStyle);
+    });
+
+    layer.setSource(vectorSource);
+
+    // Add click event listener for waypoints
+    this.map.on('click', (event: { coordinate: any; }) => {
+      this.displayNavaidInfo(event.coordinate);
+    });
+  }
+
+  displayWaypointInfo(coordinate: any): void {
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+      return feature;
+    });
+
+    if (feature) {
+      const properties = feature.getProperties();
+      let info = '<h3>Waypoint Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Waypoints:</strong> ${properties.waypoints}<br>`;
+      info += `<strong>Name of Routes:</strong> ${properties.name_of_routes}<br>`;
+
+      // Update the popup content and position
+      const popupContentElement = document.getElementById('popup-content');
+      if (popupContentElement) {
+        popupContentElement.innerHTML = info;
+      }
+
+      // Set the position of the popup
+      this.popup.setPosition(coordinate);
+    } else {
+      // Hide the popup if no waypoint is clicked
+      this.popup.setPosition(undefined);
+    }
+  }
+
+  displayNavaidInfo(coordinate: any): void {
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+      return feature;
+    });
+
+    if (feature) {
+      const properties = feature.getProperties();
+      let info = '<h3>Navaid Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
+      info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
+
+
+      // Update the popup content and position
+      const popupContentElement = document.getElementById('popup-content');
+      if (popupContentElement) {
+        popupContentElement.innerHTML = info;
+      }
+
+      // Set the position of the popup
+      this.popup.setPosition(coordinate);
+    } else {
+      // Hide the popup if no waypoint is clicked
+      this.popup.setPosition(undefined);
+    }
+  }
+
+  addGeoJSONToLayer(data: any, layer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(data, {
+        featureProjection: 'EPSG:3857'
+      })
+    });
+
+    layer.getSource().clear(); // Clear existing features
+    layer.getSource().addFeatures(vectorSource.getFeatures());
+  }
+  displayControlAirspaceInfo(coordinate: any): void {
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+      return feature;
+    });
+
+    if (feature) {
+      const properties = feature.getProperties();
+      let info = '<h3>Control Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
+      info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
+
+      // Update the popup content and position
+      const popupContentElement = document.getElementById('popup-content');
+      if (popupContentElement) {
+        popupContentElement.innerHTML = info;
+      }
+
+      // Set the position of the popup
+      this.popup.setPosition(coordinate);
+    } else {
+      // Hide the popup if no waypoint is clicked
+      this.popup.setPosition(undefined);
+    }
+  }
+  addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
         featureProjection: 'EPSG:3857'
       })
     });
-  
-    layer.getSource().clear(); // Clear existing features from the layer
-    layer.setSource(vectorSource); // Set the new source
-  
-    // Fit the map view to the extent of the GeoJSON data
+
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'purple',
+        width: 2
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      feature.setStyle(style);
+    });
+
+    layer.setSource(vectorSource);
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
-      maxZoom: 15
+      maxZoom: 10
     });
-  
-    // Create icons for each line feature
-    const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
-  
-    // Create a vector source and layer for icons
-    const iconSource = new ol.source.Vector({
-      features: iconFeatures
+    // Add click event listener for waypoints
+    this.map.on('click', (event: { coordinate: any; }) => {
+      this.displayControlAirspaceInfo(event.coordinate);
     });
-  
-    this.iconLayer.setSource(iconSource);
-  
-    // Update icon visibility based on initial zoom level
-    this.updateIconVisibility();
   }
-    
-  
-  
+
+  displayRestrictedAirspaceInfo(coordinate: any): void {
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+      return feature;
+    });
+    if (feature) {
+      const properties = feature.getProperties();
+      let info = '<h3>Restricted Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Restrictive Airspace Name:</strong> ${properties.RestrictiveAirspaceName}<br>`;
+      info += `<strong>Upper Limit:</strong> ${properties.UpperLimit}<br>`;
+      const popupContentElement = document.getElementById('popup-content');
+      if (popupContentElement) {
+        popupContentElement.innerHTML = info;
+      }
+      this.popup.setPosition(coordinate);
+    } else {
+      this.popup.setPosition(undefined);
+    }
+  }
+  addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojson, {
+        featureProjection: 'EPSG:3857'
+      })
+    });
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'red',
+        width: 2
+      })
+    });
+    vectorSource.getFeatures().forEach((feature: any) => {
+      feature.setStyle(style);
+    });
+    layer.setSource(vectorSource);
+    this.map.getView().fit(vectorSource.getExtent(), {
+      padding: [50, 50, 50, 50],
+      maxZoom: 10
+    });
+    this.map.on('click', (event: { coordinate: any; }) => {
+      this.displayRestrictedAirspaceInfo(event.coordinate);
+    });
+  }
+  addGeoJSONToRestrictedAirspaceLayer(geojson: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojson, {
+        featureProjection: 'EPSG:3857' // Ensure that the projection is correct
+      })
+    });
+
+    const style = new ol.style.Style({
+      stroke: new ol.style.Stroke({
+        color: 'red',
+        width: 2,
+        lineDash: [10, 10] // Dashed line to indicate restricted airspace
+      }),
+      fill: new ol.style.Fill({
+        color: 'rgba(255, 0, 0, 0.2)' // Semi-transparent fill for restricted areas
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      feature.setStyle(style);
+    });
+
+    this.restrictedAirspaceLayer.setSource(vectorSource);
+    this.map.getView().fit(vectorSource.getExtent(), {
+      padding: [50, 50, 50, 50],
+      maxZoom: 8
+    });
+  }
+
+  displayAerodromeObstacleInfo(coordinate: any): void {
+    const pixel = this.map.getPixelFromCoordinate(coordinate);
+    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+      return feature;
+    });
+    if (feature) {
+      const properties = feature.getProperties();
+      let info = '<h3>Aerodrome Obstacle Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+
+      const popupContentElement = document.getElementById('popup-content');
+      if (popupContentElement) {
+        popupContentElement.innerHTML = info;
+      }
+      this.popup.setPosition(coordinate);
+    } else {
+      this.popup.setPosition(undefined);
+    }
+  }
+
+
+  addGeoJSONToAerodromeObstacleLayerWithIcons(geojsonData: any, layer: any): void {
+    const vectorSource = new ol.source.Vector({
+      features: new ol.format.GeoJSON().readFeatures(geojsonData, {
+        featureProjection: 'EPSG:3857' // Ensure correct projection
+      })
+    });
+
+    const iconStyle = new ol.style.Style({
+      image: new ol.style.Icon({
+        src: 'assets/obstacle1.png', // Path to your icon in the assets folder
+        scale: 0.15, // Adjust the scale as needed
+        anchor: [0.5, 1], // Anchor at the bottom center
+        iconSize: [50, 50],
+      })
+    });
+
+    vectorSource.getFeatures().forEach((feature: any) => {
+      // Apply the icon style only to specific geometries or all features
+      feature.setStyle(iconStyle);
+    });
+
+    layer.setSource(vectorSource);
+
+    // Add click event listener for waypoints
+    this.map.on('click', (event: { coordinate: any; }) => {
+      this.displayAerodromeObstacleInfo(event.coordinate);
+    });
+  }
+
 }

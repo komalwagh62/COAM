@@ -370,35 +370,22 @@ export class MapComponent implements OnInit {
   }
 
   initMap(): void {
-    this.map = L.map('map', { zoomControl: false, attributionControl: false }).setView([20.5937, 78.9629], 5);
+    const subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+    const maxZoom = 20;
+    const attribution = '© <a href="https://www.cognitivenavigation.com/privacy-policy/">Cognitive Navigation</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
 
-    const streets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', {
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3'],
-    });
+    this.map = L.map('map', { zoomControl: false, attributionControl: true }).setView([20.5937, 78.9629], 5);
 
-    const darkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {});
-
-    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {});
-
+    const streets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { subdomains, attribution });
+    const darkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution });
     const navigation = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
-      attribution: 'Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ',
+      attribution,
       maxZoom: 16
     });
-
-    const googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-    });
-
-    const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-    });
-
-    const googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', {
-      maxZoom: 20,
-      subdomains: ['mt0', 'mt1', 'mt2', 'mt3']
-    });
+    const googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
+    const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
+    const googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
 
     const baseMaps = {
       'Streets': streets,
@@ -410,15 +397,16 @@ export class MapComponent implements OnInit {
       'Dark': darkMatter
     };
 
-    const overlayMaps = {};
 
-    L.control.layers(baseMaps, overlayMaps, { position: 'topleft' }).addTo(this.map);
+    L.control.layers(baseMaps, {}, { position: 'topleft' }).addTo(this.map);
     navigation.addTo(this.map);
     L.control.scale({ position: 'bottomright', metric: false }).addTo(this.map);
     L.control.zoom({ position: 'bottomright' }).addTo(this.map);
-
+    this.map.on('wheel', (event: L.LeafletEvent) => { }, { passive: true });
     this.airportLayerGroup = L.layerGroup().addTo(this.map);
+
   }
+
 
   updateLayers(): void {
     // Clear existing layers
