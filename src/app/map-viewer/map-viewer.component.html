@@ -1,65 +1,68 @@
+<!-- Menu Trigger Button -->
 <button mat-mini-fab color="none" class="manu1" [matMenuTriggerFor]="belowMenu" (click)="toggleMenu()">
   <mat-icon color="primary">menu</mat-icon>
 </button>
  
-<button mat-mini-fab color="none" class="filter-icon" title="Filter Data" (click)="toggleFilterPopup()" >
+<!-- Filter Button -->
+<button mat-mini-fab color="none" class="filter-icon" title="Filter Data" (click)="toggleFilterPopup()">
   <mat-icon color="primary">filter_list</mat-icon>
 </button>
-<mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
-  <div class="d-grid gap-2 col-6 mx-auto  justify-content-md-end">
-    <button mat-mini-fab class="mycolor" title="Conventional Airways">
-      <div class="icon-container"> <img src="assets/BlackAWY.png" title="Conventional Airways" (click)="loadConvData()"
-          style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
-    </button>
  
-    <button mat-mini-fab class="mycolor" title="Non-Conventional Airways" (click)="loadNonConvData()">
-      <div class="icon-container"> <img src="assets/AWY.png" title="Non-Conventional Airways"
-          style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
+<!-- Angular Material Menu -->
+<mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
+  <div class="d-grid gap-2 col-6 mx-auto justify-content-md-end">
+    <button mat-mini-fab class="mycolor" title="Conventional Airways" (click)="loadConvData($event)">
+      <div class="icon-container">
+        <img src="assets/BlackAWY.png" title="Conventional Airways" style="height: 25px; width: 30px;" alt="Conventional Airways">
+      </div>
     </button>
-    <button mat-mini-fab class="mycolor" title="FIR" >
+   
+    <button mat-mini-fab class="mycolor" title="Non-Conventional Airways" (click)="loadNonConvData($event)">
+      <div class="icon-container">
+        <img src="assets/AWY.png" title="Non-Conventional Airways" style="height: 25px; width: 30px;" alt="Non-Conventional Airways">
+      </div>
+    </button>
+   
+    <button mat-mini-fab class="mycolor" title="FIR">
       <div class="icon-container">
         <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
       </div>
     </button>
- 
-    <button mat-mini-fab class="mycolor" title="Waypoint" (click)="toggleWaypoints()">
+   
+    <button mat-mini-fab class="mycolor" title="Waypoint" (click)="toggleWaypoints($event)">
       <div class="icon-container">
         <mat-icon title="Waypoint" color="primary">change_history</mat-icon>
       </div>
     </button>
- 
-    <button mat-mini-fab class="mycolor" title="Navaids" (click)="togglenavaids()">
+   
+    <button mat-mini-fab class="mycolor" title="Navaids" (click)="togglenavaids($event)">
       <div class="icon-container">
-        <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids" alt="Controlled Airspace">
+        <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids" alt="Navaids">
       </div>
     </button>
- 
-    <button mat-mini-fab class="mycolor" title="Controlled Airspace" (click)="toggleControlAirsapce()">
+   
+    <button mat-mini-fab class="mycolor" title="Controlled Airspace" (click)="toggleControlAirsapce($event)">
       <div class="icon-container">
-        <img src="assets/CA.png" style="height: 100%; width: 60%; " title="Controlled Airspace"
-          alt="Controlled Airspace">
+        <img src="assets/CA.png" style="height: 100%; width: 60%;" title="Controlled Airspace" alt="Controlled Airspace">
       </div>
     </button>
- 
-    <button mat-mini-fab class="mycolor" title="Restricted Airspace" (click)="toggleRestrictedAirsapce()">
+   
+    <button mat-mini-fab class="mycolor" title="Restricted Airspace" (click)="toggleRestrictedAirsapce($event)">
       <div class="icon-container">
-        <img src="assets/Restricted_Airspace.png" title="Restricted Airspace" style="height: 25px; width: 25px;"
-          alt="Restricted Airspace">
+        <img src="assets/Restricted_Airspace.png" title="Restricted Airspace" style="height: 25px; width: 25px;" alt="Restricted Airspace">
       </div>
     </button>
- 
-    <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle" (click)="toggleAerodromeObstacle()">
+   
+    <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle" (click)="toggleAerodromeObstacle($event)">
       <div class="icon-container">
-        <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle" style="height: 80%;  width: 50px; "
-          alt="Aerodrome Obstacle">
+        <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle" style="height: 80%; width: 50px;" alt="Aerodrome Obstacle">
       </div>
     </button>
- 
   </div>
 </mat-menu>
  
 <!-- Filter Popup -->
-<div *ngIf="filterPopupVisible && menuOpen" id="filter-popup" class="filter-popup">
+<div *ngIf="filterPopupVisible" id="filter-popup" class="filter-popup">
   <h3>Filter By</h3>
   <a href="#" id="filter-popup-closer" class="filter-popup-closer" (click)="closeFilterPopup($event)">×</a>
   <form>
@@ -101,9 +104,7 @@
   </form>
 </div>
  
- 
- 
-<!-- Popup for feature information -->
+<!-- Popup for Feature Information -->
 <div id="popup" class="ol-popup">
   <a href="#" id="popup-closer" class="ol-popup-closer" (click)="closePopup($event)"></a>
   <div id="popup-content"></div>
