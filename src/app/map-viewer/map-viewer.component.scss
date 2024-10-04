@@ -82,8 +82,7 @@ html, body, #map-container {
   cursor: pointer;
   z-index: 1001; /* Ensure it's above the popup */
 }
- 
- 
+  
  
  
 .buttons-container {
@@ -150,7 +149,43 @@ html, body, #map-container {
   color: #333;
   cursor: pointer;
 }
- 
+.filter-popup form{
+  width: 20rem
+}
+
+@media (max-width: 550px) {
+  .filter-popup form{
+   width: 18rem;
+  }
+  .form-group input {
+    height: 25px;
+  }
+  .filter-popup {
+    top: 150px; /* Adjust top position as needed */
+    right: 100px;  
+  } 
+}
+@media (max-width: 450px) {
+  .filter-popup form{
+   width: 15rem;
+
+  }
+  
+}
+
+@media (max-width: 400px) {
+  .filter-popup form{
+   width: 12rem;
+  }
+  .form-group input {
+    height: 20px;
+  }
+  .filter-popup {
+    top: 150px; /* Adjust top position as needed */
+    right: 100px; /* Adjust right position as needed */  
+  } 
+}
+
 .form-row {
   display: flex;
   flex-wrap: wrap;
@@ -161,18 +196,20 @@ html, body, #map-container {
   display: flex;
   flex-direction: column;
   flex-basis: 100%;
-  max-width: 100%;
+  width: 100%;  
 }
  
 .form-group label {
-  margin-bottom: 5px;
+  margin-top: 5px;
   font-weight: bold;
 }
  
 .form-group input {
   padding: 5px;
+  // margin-bottom: 5px;
   border: 1px solid #ccc;
   border-radius: 4px;
+  
 }
  
 button:hover {

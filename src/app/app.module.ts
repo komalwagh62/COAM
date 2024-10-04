@@ -1,13 +1,13 @@
 import { NgModule } from '@angular/core';
 import { BrowserModule } from '@angular/platform-browser';
-
+import { RouterModule } from '@angular/router';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MapComponent } from './map/map.component';
 import { MatSelectModule } from '@angular/material/select';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatInputModule } from '@angular/material/input';
-
+import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatButtonModule } from '@angular/material/button';
@@ -26,6 +26,8 @@ import { LoginComponent } from './login/login.component';
 
 import { LayoutModule } from '@angular/cdk/layout';
 import { MapViewerComponent } from './map-viewer/map-viewer.component';
+import { LeafletMapComponent } from './leaflet-map/leaflet-map.component';
+
 
 @NgModule({
     declarations: [
@@ -35,6 +37,8 @@ import { MapViewerComponent } from './map-viewer/map-viewer.component';
         LoginComponent,
         FooterComponent,
         MapViewerComponent,
+        LeafletMapComponent,
+        
     ],
   
     imports: [
@@ -54,7 +58,10 @@ import { MapViewerComponent } from './map-viewer/map-viewer.component';
         MatListModule,
         MatMenuModule,
         LayoutModule,
-        MatSidenavModule
+        MatSidenavModule,
+        RouterModule,
+        CommonModule
+        
 
     ],
     bootstrap: [AppComponent],

@@ -2,70 +2,75 @@
 <button mat-mini-fab color="none" class="manu1" [matMenuTriggerFor]="belowMenu" (click)="toggleMenu()">
   <mat-icon color="primary">menu</mat-icon>
 </button>
- 
+
 <!-- Filter Button -->
 <button mat-mini-fab color="none" class="filter-icon" title="Filter Data" (click)="toggleFilterPopup()">
   <mat-icon color="primary">filter_list</mat-icon>
 </button>
- 
+
 <!-- Angular Material Menu -->
 <mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
   <div class="d-grid gap-2 col-6 mx-auto justify-content-md-end">
     <button mat-mini-fab class="mycolor" title="Conventional Airways" (click)="loadConvData($event)">
       <div class="icon-container">
-        <img src="assets/BlackAWY.png" title="Conventional Airways" style="height: 25px; width: 30px;" alt="Conventional Airways">
+        <img src="assets/BlackAWY.png" title="Conventional Airways" style="height: 25px; width: 30px;"
+          alt="Conventional Airways">
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Non-Conventional Airways" (click)="loadNonConvData($event)">
       <div class="icon-container">
-        <img src="assets/AWY.png" title="Non-Conventional Airways" style="height: 25px; width: 30px;" alt="Non-Conventional Airways">
+        <img src="assets/AWY.png" title="Non-Conventional Airways" style="height: 25px; width: 30px;"
+          alt="Non-Conventional Airways">
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="FIR">
       <div class="icon-container">
         <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Waypoint" (click)="toggleWaypoints($event)">
       <div class="icon-container">
         <mat-icon title="Waypoint" color="primary">change_history</mat-icon>
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Navaids" (click)="togglenavaids($event)">
       <div class="icon-container">
         <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids" alt="Navaids">
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Controlled Airspace" (click)="toggleControlAirsapce($event)">
       <div class="icon-container">
-        <img src="assets/CA.png" style="height: 100%; width: 60%;" title="Controlled Airspace" alt="Controlled Airspace">
+        <img src="assets/CA.png" style="height: 100%; width: 60%;" title="Controlled Airspace"
+          alt="Controlled Airspace">
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Restricted Airspace" (click)="toggleRestrictedAirsapce($event)">
       <div class="icon-container">
-        <img src="assets/Restricted_Airspace.png" title="Restricted Airspace" style="height: 25px; width: 25px;" alt="Restricted Airspace">
+        <img src="assets/Restricted_Airspace.png" title="Restricted Airspace" style="height: 25px; width: 25px;"
+          alt="Restricted Airspace">
       </div>
     </button>
-   
+
     <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle" (click)="toggleAerodromeObstacle($event)">
       <div class="icon-container">
-        <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle" style="height: 80%; width: 50px;" alt="Aerodrome Obstacle">
+        <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle" style="height: 80%; width: 50px;"
+          alt="Aerodrome Obstacle">
       </div>
     </button>
   </div>
 </mat-menu>
- 
+
 <!-- Filter Popup -->
 <div *ngIf="filterPopupVisible" id="filter-popup" class="filter-popup">
   <h3>Filter By</h3>
   <a href="#" id="filter-popup-closer" class="filter-popup-closer" (click)="closeFilterPopup($event)">×</a>
-  <form>
+  <!-- <form>
     <div class="form-row">
       <div class="form-group">
         <label for="type">Type:</label>
@@ -101,14 +106,156 @@
     </div>
     <button type="button" class="buttons"
       (click)="filterAndShowFeatures(typeInput.value, trackMagneticInput.value, airwayIdInput.value, upperLimitInput.value, lowerLimitInput.value, meaInput.value, lateralLimitsInput.value)">Apply</button>
+  </form> -->
+
+  <form>
+    <div class="form-group">
+      <label for="type">Type:</label>
+      <select id="type" [(ngModel)]="selectedType" name="type">
+        <option value="conv">Conventional Airways</option>
+        <option value="nonconv">Non-Conventional Airways</option>
+        <option value="Waypoint">Waypoint</option>
+        <option value="Navaids">Navaids</option>
+        <option value="ControlAirspace">Control Airspace</option>
+        <option value="RestrictedAirspace">Restricted Airspace</option>
+        <option value="AerodromeObstacle">Aerodrome Obstacle</option>
+      </select>
+    </div>
+
+    <!-- Fields for Conventional Airways -->
+    <div *ngIf="selectedType === 'conv'">
+      <div class="form-group">
+        <label for="track_magnetic">Track Magnetic:</label>
+        <input type="text" id="track_magnetic" #trackMagneticInput>
+      </div>
+      <div class="form-group">
+        <label for="airway_id">Airway ID:</label>
+        <input type="text" id="airway_id" #airwayIdInput>
+      </div>
+      <div class="form-group">
+        <label for="upper_limit">Upper Limit:</label>
+        <input type="text" id="upper_limit" #upperLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="lower_limit">Lower Limit:</label>
+        <input type="text" id="lower_limit" #lowerLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="mea">MEA:</label>
+        <input type="text" id="mea" #meaInput>
+      </div>
+      <div class="form-group">
+        <label for="lateral_limits">Lateral Limits:</label>
+        <input type="text" id="lateral_limits" #lateralLimitsInput>
+      </div>
+      <button type="button" class="buttons"
+        (click)="filterAndShowFeatures( trackMagneticInput.value, airwayIdInput.value, upperLimitInput.value, lowerLimitInput.value, meaInput.value, lateralLimitsInput.value)">Apply</button>
+    </div>
+
+    <!-- Fields for nonConventional Airways -->
+    <div *ngIf="selectedType === 'nonconv'">
+      <div class="form-group">
+        <label for="track_magnetic">Track Magnetic:</label>
+        <input type="text" id="track_magnetic" #trackMagneticInput>
+      </div>
+      <div class="form-group">
+        <label for="airway_id">Airway ID:</label>
+        <input type="text" id="airway_id" #airwayIdInput>
+      </div>
+      <div class="form-group">
+        <label for="upper_limit">Upper Limit:</label>
+        <input type="text" id="upper_limit" #upperLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="lower_limit">Lower Limit:</label>
+        <input type="text" id="lower_limit" #lowerLimitInput>
+      </div>
+      <div class="form-group">
+        <label for="mea">MEA:</label>
+        <input type="text" id="mea" #meaInput>
+      </div>
+      <div class="form-group">
+        <label for="lateral_limits">Lateral Limits:</label>
+        <input type="text" id="lateral_limits" #lateralLimitsInput>
+      </div>
+      <button type="button" class="buttons">Apply</button>
+    </div>
+
+    <!--  Fields for Waypoint -->
+    <div *ngIf="selectedType === 'Waypoint'">
+      <div class="form-group">
+        <label for="id">ID:</label>
+        <input type="text" id="id" #idInput>
+      </div>
+      <div class="form-group">
+        <label for="waypoints">Waypoints:</label>
+        <input type="text" id="wayPoints" #waypointsInput>
+      </div>
+      <div class="form-group">
+        <label for="name_of_routes">Name Of Routes:</label>
+        <input type="text" id="name_of_routes" #routeNameInput>
+      </div>
+      <button type="button" class="buttons">Apply</button>
+    </div>
+
+    <!--  Fields for novaid -->
+    <div *ngIf="selectedType === 'Navaids'">
+      <div class="form-group">
+        <label for="id">ID:</label>
+        <input type="text" id="id" #idInput>
+      </div>
+      <div class="form-group">
+        <label for="airport_icao">Airport ICAO:</label>
+        <input type="text" id="airport_icao" #airportICAOInput>
+      </div>
+      <div class="form-group">
+        <label for="navaid_information">Navaid Information:</label>
+        <input type="text" id="navaid_information" #navaidInfoInput>
+      </div>
+      <button type="button" class="buttons">Apply</button>
+    </div>
+
+    <!--  Fields for ControlAirspace -->
+    <div *ngIf="selectedType === 'ControlAirspace'">
+      <div class="form-group">
+        <label for="id">ID:</label>
+        <input type="text" id="id" #idInput>
+      </div>
+      <div class="form-group">
+        <label for="AirspaceCenter">Airspace Center:</label>
+        <input type="text" id="AirspaceCenter" #airspaceCenterInput>
+      </div>
+      <div class="form-group">
+        <label for="ControlledAirspaceName">Controlled Airspace Name:</label>
+        <input type="text" id="ControlledAirspaceName" #airspaceNameInput>
+      </div>
+      <button type="button" class="buttons">Apply</button>
+    </div>
+
+    <!--  Fields for RestrictedAirspace -->
+    <div *ngIf="selectedType === 'RestrictedAirspace'">
+      <div class="form-group">
+        <label for="id">ID:</label>
+        <input type="text" id="id" #idInput>
+      </div>
+      <div class="form-group">
+        <label for="RestrictedAirspaceName">Restricted Airspace Name:</label>
+        <input type="text" id="RestrictedAirspaceName" #restrictedAirspaceNameInput>
+      </div>
+      <div class="form-group">
+        <label for="upper_limit">Upper Limit:</label>
+        <input type="text" id="upper_limit" #upperLimitInput>
+      </div>
+      <button type="button" class="buttons">Apply</button>
+    </div>
   </form>
 </div>
- 
+
 <!-- Popup for Feature Information -->
 <div id="popup" class="ol-popup">
   <a href="#" id="popup-closer" class="ol-popup-closer" (click)="closePopup($event)"></a>
   <div id="popup-content"></div>
 </div>
- 
+
 <!-- Map Container -->
 <div id="map" class="map"></div>

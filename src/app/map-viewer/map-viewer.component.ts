@@ -1,12 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 declare var ol: any;
- 
+
 @Component({
   selector: 'app-map-viewer',
   templateUrl: './map-viewer.component.html',
   styleUrls: ['./map-viewer.component.scss']
 })
 export class MapViewerComponent implements OnInit {
+  
   trackMagnetic: string = '';
   airwayId: string = '';
   upperLimit: string = '';
@@ -31,7 +32,7 @@ export class MapViewerComponent implements OnInit {
   zoomThreshold: number = 8;
   selectedType: string = 'conv'; // Default type
   constructor() { }
- 
+
   ngOnInit(): void {
     this.initMap();
   }
@@ -39,16 +40,16 @@ export class MapViewerComponent implements OnInit {
     this.selectedType = event.target.value;
     // Optionally reset filter fields or update UI based on type
   }
- 
+
   applyFilters() {
-    this.filterAndShowFeatures(this.selectedType, this.trackMagnetic, this.airwayId, this.upperLimit, this.lowerLimit, this.mea, this.lateralLimits);
+    this.filterAndShowFeatures( this.trackMagnetic, this.airwayId, this.upperLimit, this.lowerLimit, this.mea, this.lateralLimits);
   }
   initMap(): void {
     if (typeof ol === 'undefined') {
       console.error('OpenLayers library failed to load.');
       return;
     }
- 
+
     this.map = new ol.Map({
       view: new ol.View({
         center: [0, 0],
@@ -61,14 +62,14 @@ export class MapViewerComponent implements OnInit {
       ],
       target: 'map'
     });
- 
+
     this.popup = new ol.Overlay({
       element: document.getElementById('popup'),
       autoPan: true,
       autoPanAnimation: { duration: 250 }
     });
     this.map.addOverlay(this.popup);
- 
+
     this.addMapLayers();
     this.conventionalAirwaysLayer.setVisible(false);
     this.nonConventionalAirwaysLayer.setVisible(false);
@@ -85,7 +86,7 @@ export class MapViewerComponent implements OnInit {
     );
     this.map.getView().fit(indiaExtent, { size: this.map.getSize() });
   }
- 
+
   addMapLayers(): void {
     // Define common style for vector layers
     const commonStyle = new ol.style.Style({
@@ -95,22 +96,22 @@ export class MapViewerComponent implements OnInit {
         stroke: new ol.style.Stroke({ color: 'white', width: 2 })
       })
     });
- 
+
     this.conventionalAirwaysLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: commonStyle
     });
- 
+
     this.nonConventionalAirwaysLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: commonStyle
     });
- 
+
     this.waypointsPoint = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: commonStyle
     });
- 
+
     this.navaidsData = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: new ol.style.Style({
@@ -121,12 +122,12 @@ export class MapViewerComponent implements OnInit {
         })
       })
     });
- 
+
     this.controlAirspaceLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: commonStyle
     });
- 
+
     this.restrictedAirspaceLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: new ol.style.Style({
@@ -138,7 +139,7 @@ export class MapViewerComponent implements OnInit {
         fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' })
       })
     });
- 
+
     this.aerodromeObstacleLayer = new ol.layer.Vector({
       source: new ol.source.Vector(),
       style: new ol.style.Style({
@@ -150,7 +151,7 @@ export class MapViewerComponent implements OnInit {
         fill: new ol.style.Fill({ color: 'rgba(255, 0, 0, 0.2)' })
       })
     });
- 
+
     // Add layers to the map
     this.map.addLayer(this.conventionalAirwaysLayer);
     this.map.addLayer(this.nonConventionalAirwaysLayer);
@@ -159,16 +160,18 @@ export class MapViewerComponent implements OnInit {
     this.map.addLayer(this.controlAirspaceLayer);
     this.map.addLayer(this.restrictedAirspaceLayer);
     this.map.addLayer(this.aerodromeObstacleLayer);
+
+
   }
- 
+
   toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
   }
- 
+
   toggleFilterPopup(): void {
     this.filterPopupVisible = !this.filterPopupVisible;
   }
- 
+
   fetchGeoJSONData(url: string): Promise<any> {
     return fetch(url)
       .then(response => {
@@ -185,7 +188,7 @@ export class MapViewerComponent implements OnInit {
         return null;
       });
   }
- 
+
   createIconFeatures(features: any[]): any[] {
     const iconFeatures: any[] = [];
     const overlapDistance = 100;
@@ -299,12 +302,12 @@ export class MapViewerComponent implements OnInit {
     });
     return iconFeatures;
   }
- 
+
   closePopup(event: Event): void {
     event.preventDefault(); // Prevent the default action
     this.popup.setPosition(undefined);
   }
- 
+
   displayFeatureInfo(coordinate: any): void {
     const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
       return feature;
@@ -326,14 +329,14 @@ export class MapViewerComponent implements OnInit {
         'direction_of_cruising_levels',
         'type'
       ];
- 
+
       let info = '<h3>Feature Info</h3>';
       displayProperties.forEach(prop => {
         if (properties.hasOwnProperty(prop)) {
           info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
         }
       });
- 
+
       // Set popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
@@ -344,19 +347,19 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined); // Hide popup if no feature is clicked
     }
   }
- 
+
   closeFilterPopup(event: Event): void {
     event.preventDefault();
     this.filterPopupVisible = false;
   }
- 
- 
+
+
   loadConvData(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.conventionalAirwaysLayer.getVisible();
     console.log('Layer visibility:', visible);
     this.conventionalAirwaysLayer.setVisible(visible);
- 
+
     if (visible) {
       console.log('Loading data...');
       const geojsonUrl = 'http://localhost:3002/api/convlinedata';
@@ -371,11 +374,11 @@ export class MapViewerComponent implements OnInit {
       this.conventionalAirwaysLayer.getSource().clear();
     }
   }
- 
-  displayConventionalAirwaysInfo(coordinate: any): void {
-    const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
-      return feature;
-    });
+
+  displayConventionalAirwaysInfo(feature: any, coordinate: any): void {
+    // const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
+    //   return feature;
+    // });
     if (feature) {
       const properties = feature.getProperties();
       const displayProperties = [
@@ -393,14 +396,14 @@ export class MapViewerComponent implements OnInit {
         'direction_of_cruising_levels',
         'type'
       ];
- 
+
       let info = '<h3>Feature Info</h3>';
       displayProperties.forEach(prop => {
         if (properties.hasOwnProperty(prop)) {
           info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
         }
       });
- 
+
       // Set popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
@@ -410,82 +413,90 @@ export class MapViewerComponent implements OnInit {
     } else {
       this.popup.setPosition(undefined); // Hide popup if no feature is clicked
     }
- 
+
   }
- 
-  filterAndShowFeatures(type: string, trackMagnetic: string, airwayId: string, upperLimit: string, lowerLimit: string, mea: string, lateralLimits: string): void {
+
+  filterAndShowFeatures( trackMagnetic: string, airwayId: string, upperLimit: string, lowerLimit: string, mea: string, lateralLimits: string): void {
     const url = new URL('http://localhost:3002/api/convlinedata');
     const params: any = {};
- 
-    if (type) params.type = type;
+
+    // if (type) params.type = type;
     if (trackMagnetic) params.track_magnetic = trackMagnetic;
     if (airwayId) params.airway_id = airwayId;
     if (upperLimit) params.upper_limit = upperLimit;
     if (lowerLimit) params.lower_limit = lowerLimit;
     if (mea) params.mea = mea;
     if (lateralLimits) params.lateral_limits = lateralLimits;
- 
+
     url.search = new URLSearchParams(params).toString();
- 
+
     this.fetchGeoJSONData(url.toString()).then(data => {
       if (data && data.features) {
         // Filter GeoJSON data based on trackMagnetic and airwayId conditions
         data.features = data.features.filter((feature: any) => {
           let match = true;
- 
+
           if (trackMagnetic && feature.properties.track_magnetic !== trackMagnetic) {
             match = false;
           }
- 
+
           if (airwayId && feature.properties.airway_id !== airwayId) {
             match = false;
           }
           if (upperLimit && feature.properties.upper_limit !== upperLimit) {
             match = false;
           }
- 
+
           // Add other conditions like upperLimit, lowerLimit, etc. if needed
- 
+
           return match;
         });
- 
+
         // Add filtered GeoJSON data to the map
         this.addGeoJSONToMap(data);
       }
     });
   }
- 
+
   addGeoJSONToConventionalAirwaysLayer(geojson: any, conventionalAirwaysLayer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
         featureProjection: 'EPSG:3857'
       })
     });
- 
+
     const style = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'black',
         width: 2
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       feature.setStyle(style);
     });
- 
+
     this.conventionalAirwaysLayer.setSource(vectorSource);
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
       maxZoom: 8
     });
- 
+
     // Create and add icon features for conventional airways
     const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
     const iconSource = new ol.source.Vector({
       features: iconFeatures
     });
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayConventionalAirwaysInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayConventionalAirwaysInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.conventionalAirwaysLayer) {
+          this.displayConventionalAirwaysInfo(feature, event.coordinate);
+        }
+      });
     });
     // Create separate icon layer for conventional airways
     this.conventionalIconLayer = new ol.layer.Vector({
@@ -495,9 +506,9 @@ export class MapViewerComponent implements OnInit {
     this.map.on('moveend', () => {
       this.updateIconVisibility();
     });
- 
+
   }
- 
+
   loadNonConvData(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.nonConventionalAirwaysLayer.getVisible();
@@ -516,11 +527,11 @@ export class MapViewerComponent implements OnInit {
       this.nonConventionalAirwaysLayer.getSource().clear();
     }
   }
- 
-  displayNonConventionalAirwaysInfo(coordinate: any): void {
-    const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
-      return feature;
-    });
+
+  displayNonConventionalAirwaysInfo(feature: any, coordinate: any): void {
+    // const feature = this.map.forEachFeatureAtPixel(this.map.getPixelFromCoordinate(coordinate), (feature: any) => {
+    //   return feature;
+    // });
     if (feature) {
       const properties = feature.getProperties();
       const displayProperties = [
@@ -538,14 +549,14 @@ export class MapViewerComponent implements OnInit {
         'direction_of_cruising_levels',
         'type'
       ];
- 
+
       let info = '<h3>Feature Info</h3>';
       displayProperties.forEach(prop => {
         if (properties.hasOwnProperty(prop)) {
           info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
         }
       });
- 
+
       // Set popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
@@ -555,54 +566,62 @@ export class MapViewerComponent implements OnInit {
     } else {
       this.popup.setPosition(undefined); // Hide popup if no feature is clicked
     }
- 
+
   }
- 
+
   addGeoJSONToNonConventionalAirwaysLayer(geojson: any, nonConventionalAirwaysLayer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
         featureProjection: 'EPSG:3857'
       })
     });
- 
+
     const style = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'blue',
         width: 2
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       feature.setStyle(style);
     });
- 
+
     this.nonConventionalAirwaysLayer.setSource(vectorSource);
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
       maxZoom: 8
     });
     // Add click event listener for waypoints
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayNonConventionalAirwaysInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayNonConventionalAirwaysInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.nonConventionalAirwaysLayer) {
+          this.displayNonConventionalAirwaysInfo(feature, event.coordinate);
+        }
+      });
     });
- 
+
     // Create and add icon features for non-conventional airways
     const iconFeatures = this.createIconFeatures(vectorSource.getFeatures());
     const iconSource = new ol.source.Vector({
       features: iconFeatures
     });
- 
+
     // Create separate icon layer for non-conventional airways
     this.nonConventionalIconLayer = new ol.layer.Vector({
       source: iconSource
     });
     this.map.addLayer(this.nonConventionalIconLayer);
- 
+
     this.map.on('moveend', () => {
       this.updateIconVisibility();
     });
   }
- 
+
   updateIconVisibility(): void {
     const zoom = this.map.getView().getZoom();
     // Show/hide icons based on zoom level
@@ -613,7 +632,7 @@ export class MapViewerComponent implements OnInit {
       this.nonConventionalIconLayer.setVisible(zoom > this.zoomThreshold);
     }
   }
- 
+
   toggleWaypoints(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.waypointsPoint.getVisible();
@@ -632,26 +651,26 @@ export class MapViewerComponent implements OnInit {
       this.waypointsPoint.getSource().clear();
     }
   }
- 
-  displayWaypointInfo(coordinate: any): void {
-    const pixel = this.map.getPixelFromCoordinate(coordinate);
-    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
-      return feature;
-    });
- 
+
+  displayWaypointInfo(feature: any, coordinate: any): void {
+    // const pixel = this.map.getPixelFromCoordinate(coordinate);
+    // const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+    //   return feature;
+    // });
+
     if (feature) {
       const properties = feature.getProperties();
       let info = '<h3>Waypoint Info</h3>';
       info += `<strong>ID:</strong> ${properties.id}<br>`;
       info += `<strong>Waypoints:</strong> ${properties.waypoints}<br>`;
       info += `<strong>Name of Routes:</strong> ${properties.name_of_routes}<br>`;
- 
+
       // Update the popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
         popupContentElement.innerHTML = info;
       }
- 
+
       // Set the position of the popup
       this.popup.setPosition(coordinate);
     } else {
@@ -659,14 +678,14 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined);
     }
   }
- 
+
   addGeoJSONToWaypointLayerWithIcons(geojsonData: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojsonData, {
         featureProjection: 'EPSG:3857' // Ensure correct projection
       })
     });
- 
+
     const iconStyle = new ol.style.Style({
       image: new ol.style.Icon({
         src: 'assets/bleach.png', // Path to your icon in the assets folder
@@ -678,39 +697,47 @@ export class MapViewerComponent implements OnInit {
         fill: new ol.style.Fill({
           color: 'black' // Text color
         }),
- 
+
         offsetY: -15, // Position the text above the icon
         text: '' // Placeholder, will be updated with feature name
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
-      const name = feature.get('waypoints'); // Assuming 'waypoints' is the property for waypoint names
- 
+      feature.get('waypoints'); // Assuming 'waypoints' is the property for waypoint names
+
       // Clone the icon style for each feature
       const featureIconStyle = iconStyle.clone();
       featureIconStyle.getText().setText(''); // Initially hide the text
- 
+
       // Apply the icon and text style to the feature
       feature.setStyle(featureIconStyle);
     });
- 
+
     layer.setSource(vectorSource);
- 
+
     // Add click event listener for waypoints
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayWaypointInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayWaypointInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.waypointsPoint) {
+          this.displayWaypointInfo(feature, event.coordinate);
+        }
+      });
     });
- 
+
     // Listen for zoom changes and update label visibility
     this.map.getView().on('change:resolution', () => {
       const zoom = this.map.getView().getZoom();
- 
+
       // Show labels only when zoom is higher than 10, for example
       vectorSource.getFeatures().forEach((feature: any) => {
         const featureStyle = feature.getStyle();
         const textStyle = featureStyle.getText();
- 
+
         if (zoom > 8) { // Set zoom threshold for showing waypoint names
           textStyle.setText(feature.get('waypoints')); // Show the waypoint name
         } else {
@@ -719,7 +746,7 @@ export class MapViewerComponent implements OnInit {
       });
     });
   }
- 
+
   togglenavaids(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.navaidsData.getVisible();
@@ -738,7 +765,7 @@ export class MapViewerComponent implements OnInit {
       this.navaidsData.getSource().clear();
     }
   }
- 
+
   toggleControlAirsapce(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.controlAirspaceLayer.getVisible();
@@ -756,9 +783,9 @@ export class MapViewerComponent implements OnInit {
     } else {
       this.controlAirspaceLayer.getSource().clear();
     }
- 
+
   }
- 
+
   toggleRestrictedAirsapce(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.restrictedAirspaceLayer.getVisible();
@@ -783,24 +810,26 @@ export class MapViewerComponent implements OnInit {
         featureProjection: 'EPSG:3857'
       })
     });
- 
+
     // Remove existing vectorLayer from the map
     if (this.vectorLayer) {
       this.map.removeLayer(this.vectorLayer);
     }
- 
+
     this.vectorLayer = new ol.layer.Vector({
       source: vectorSource
     });
- 
+
     this.map.addLayer(this.vectorLayer);
- 
+
     // Fit the map view to the extent of the GeoJSON data
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
       maxZoom: 15
     });
   }
+
+  
   toggleAerodromeObstacle(event: MouseEvent): void {
     event.stopPropagation();
     const visible = !this.aerodromeObstacleLayer.getVisible();
@@ -819,14 +848,14 @@ export class MapViewerComponent implements OnInit {
       this.aerodromeObstacleLayer.getSource().clear();
     }
   }
- 
+
   addGeoJSONToNavaidLayerWithIcons(geojsonData: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojsonData, {
         featureProjection: 'EPSG:3857' // Ensure correct projection
       })
     });
- 
+
     const iconStyle = new ol.style.Style({
       image: new ol.style.Icon({
         src: 'assets/navaid_icon.png', // Path to your icon in the assets folder
@@ -835,40 +864,49 @@ export class MapViewerComponent implements OnInit {
         iconSize: [20, 30],
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       // Apply the icon style only to specific geometries or all features
       feature.setStyle(iconStyle);
     });
- 
+
     layer.setSource(vectorSource);
- 
+
     // Add click event listener for waypoints
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayNavaidInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayNavaidInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.navaidsData) {
+          this.displayNavaidInfo(feature, event.coordinate);
+        }
+      });
     });
+
   }
- 
-  displayNavaidInfo(coordinate: any): void {
-    const pixel = this.map.getPixelFromCoordinate(coordinate);
-    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
-      return feature;
-    });
- 
+
+  displayNavaidInfo(feature: any, coordinate: any): void {
+    // const pixel = this.map.getPixelFromCoordinate(coordinate);
+    // const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+    //   return feature;
+    // });
+
     if (feature) {
       const properties = feature.getProperties();
       let info = '<h3>Navaid Info</h3>';
       info += `<strong>ID:</strong> ${properties.id}<br>`;
       info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
       info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
- 
- 
+
+
       // Update the popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
         popupContentElement.innerHTML = info;
       }
- 
+
       // Set the position of the popup
       this.popup.setPosition(coordinate);
     } else {
@@ -876,37 +914,37 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined);
     }
   }
- 
+
   addGeoJSONToLayer(data: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(data, {
         featureProjection: 'EPSG:3857'
       })
     });
- 
+
     layer.getSource().clear(); // Clear existing features
     layer.getSource().addFeatures(vectorSource.getFeatures());
   }
- 
-  displayControlAirspaceInfo(coordinate: any): void {
-    const pixel = this.map.getPixelFromCoordinate(coordinate);
-    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
-      return feature;
-    });
- 
+
+  displayControlAirspaceInfo(feature: any, coordinate: any): void {
+    // const pixel = this.map.getPixelFromCoordinate(coordinate);
+    // const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+    //   return feature;
+    // });
+
     if (feature) {
       const properties = feature.getProperties();
       let info = '<h3>Control Airspace Info</h3>';
       info += `<strong>ID:</strong> ${properties.id}<br>`;
       info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
       info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
- 
+
       // Update the popup content and position
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
         popupContentElement.innerHTML = info;
       }
- 
+
       // Set the position of the popup
       this.popup.setPosition(coordinate);
     } else {
@@ -914,41 +952,50 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined);
     }
   }
- 
+
   addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
         featureProjection: 'EPSG:3857'
       })
     });
- 
+
     const style = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'purple',
         width: 2
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       feature.setStyle(style);
     });
- 
+
     layer.setSource(vectorSource);
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
       maxZoom: 10
     });
     // Add click event listener for waypoints
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayControlAirspaceInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayControlAirspaceInfo(event.coordinate);
+    // });
+    
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.controlAirspaceLayer) {
+          this.displayControlAirspaceInfo(feature, event.coordinate);
+        }
+      });
     });
   }
- 
-  displayRestrictedAirspaceInfo(coordinate: any): void {
-    const pixel = this.map.getPixelFromCoordinate(coordinate);
-    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
-      return feature;
-    });
+
+  displayRestrictedAirspaceInfo(feature: any, coordinate: any): void {
+    // const pixel = this.map.getPixelFromCoordinate(coordinate);
+    // const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+    //   return feature;
+    // });
     if (feature) {
       const properties = feature.getProperties();
       let info = '<h3>Restricted Airspace Info</h3>';
@@ -964,7 +1011,7 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined);
     }
   }
- 
+
   addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
@@ -985,18 +1032,26 @@ export class MapViewerComponent implements OnInit {
       padding: [50, 50, 50, 50],
       maxZoom: 10
     });
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayRestrictedAirspaceInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayRestrictedAirspaceInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.restrictedAirspaceLayer) {
+          this.displayRestrictedAirspaceInfo(feature, event.coordinate);
+        }
+      });
     });
   }
- 
+
   addGeoJSONToRestrictedAirspaceLayer(geojson: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojson, {
         featureProjection: 'EPSG:3857' // Ensure that the projection is correct
       })
     });
- 
+
     const style = new ol.style.Style({
       stroke: new ol.style.Stroke({
         color: 'red',
@@ -1007,28 +1062,28 @@ export class MapViewerComponent implements OnInit {
         color: 'rgba(255, 0, 0, 0.2)' // Semi-transparent fill for restricted areas
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       feature.setStyle(style);
     });
- 
+
     this.restrictedAirspaceLayer.setSource(vectorSource);
     this.map.getView().fit(vectorSource.getExtent(), {
       padding: [50, 50, 50, 50],
       maxZoom: 8
     });
   }
- 
-  displayAerodromeObstacleInfo(coordinate: any): void {
-    const pixel = this.map.getPixelFromCoordinate(coordinate);
-    const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
-      return feature;
-    });
+
+  displayAerodromeObstacleInfo(feature: any, coordinate: any): void {
+    // const pixel = this.map.getPixelFromCoordinate(coordinate);
+    // const feature = this.map.forEachFeatureAtPixel(pixel, (feature: any) => {
+    //   return feature;
+    // });
     if (feature) {
       const properties = feature.getProperties();
       let info = '<h3>Aerodrome Obstacle Info</h3>';
       info += `<strong>ID:</strong> ${properties.id}<br>`;
- 
+
       const popupContentElement = document.getElementById('popup-content');
       if (popupContentElement) {
         popupContentElement.innerHTML = info;
@@ -1038,14 +1093,14 @@ export class MapViewerComponent implements OnInit {
       this.popup.setPosition(undefined);
     }
   }
- 
+
   addGeoJSONToAerodromeObstacleLayerWithIcons(geojsonData: any, layer: any): void {
     const vectorSource = new ol.source.Vector({
       features: new ol.format.GeoJSON().readFeatures(geojsonData, {
         featureProjection: 'EPSG:3857' // Ensure correct projection
       })
     });
- 
+
     const iconStyle = new ol.style.Style({
       image: new ol.style.Icon({
         src: 'assets/obstacle1.png', // Path to your icon in the assets folder
@@ -1054,18 +1109,26 @@ export class MapViewerComponent implements OnInit {
         iconSize: [50, 50],
       })
     });
- 
+
     vectorSource.getFeatures().forEach((feature: any) => {
       // Apply the icon style only to specific geometries or all features
       feature.setStyle(iconStyle);
     });
- 
+
     layer.setSource(vectorSource);
- 
+
     // Add click event listener for waypoints
-    this.map.on('click', (event: { coordinate: any; }) => {
-      this.displayAerodromeObstacleInfo(event.coordinate);
+    // this.map.on('click', (event: { coordinate: any; }) => {
+    //   this.displayAerodromeObstacleInfo(event.coordinate);
+    // });
+    this.map.on('click', (event: { coordinate: any }) => {
+      const pixel = this.map.getPixelFromCoordinate(event.coordinate);
+      this.map.forEachFeatureAtPixel(pixel, (feature: any, layer: any) => {
+        if (layer === this.restrictedAirspaceLayer) {
+          this.displayAerodromeObstacleInfo(feature, event.coordinate);
+        }
+      });
     });
   }
- 
+
 }
