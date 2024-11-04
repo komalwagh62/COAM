@@ -289,7 +289,7 @@
                             </button>
 
                             <!-- Button for FIR -->
-                            <button mat-mini-fab class="mycolor" title="FIR" (click)="loadFIR($event)">
+                            <button mat-mini-fab class="mycolor" title="FIR" (click)="loadLayer($event, 'FIR', 'FIRlayer')">
                                 <div class="icon-container">
                                     <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
                                 </div>
@@ -338,12 +338,20 @@
                                         style="height: 80%; width: 50px;" alt="Aerodrome Obstacle">
                                 </div>
                             </button>
+                            
+                            <button mat-mini-fab class="mycolor" title="Airport"
+                                    (click)="loadLayer($event, 'airportdetails', 'airportdetailsLayer')">
+                                <div class="icon-container">
+                                    <img src="assets/airport.png" title="Airport" style="height: 25px; width: 30px;" alt="Airport">
+                                </div>
+                            </button>
+
                         </div>
                     </mat-menu>
 
                     <div id="map" style="height: 100vh; width:100%; position: relative;">
 
-                       
+
                         <!-- Filter Form for Conventional Line Data -->
                         <div id="convFilterPopup" *ngIf="activeLayer === 'convlinedata' && filterPopupVisible"
                             class="filter-popup">
@@ -373,7 +381,8 @@
                         </div>
 
                         <!-- Filter Form for Non-Conventional Line Data -->
-                        <div id="nonConvFilterPopup" *ngIf="activeLayer === 'nonconvlinedata' && filterPopupVisible" class="filter-popup">
+                        <div id="nonConvFilterPopup" *ngIf="activeLayer === 'nonconvlinedata' && filterPopupVisible"
+                            class="filter-popup">
                             <h3>Non-Conventional Line Data Filter</h3>
                             <form (submit)="applyNonConvFilter($event)">
                                 <label for="nonairwayIdInput">Airway ID:</label>
@@ -399,7 +408,7 @@
                                 <button type="submit">Apply Filter</button>
                             </form>
                         </div>
-                     
+
                     </div>
                 </div>
                 <div>

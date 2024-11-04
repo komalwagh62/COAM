@@ -40,6 +40,8 @@ export class MapComponent implements OnInit {
   airportLayerGroup!: any;
   selectedAirwayId: string = '';
   selectwaypoint: string = '';
+  selectAirport: string = '';
+  selectFIR: string = '';
   [key: string]: any; // Allows dynamic properties
 
   // Existing properties and methods
@@ -1106,13 +1108,6 @@ export class MapComponent implements OnInit {
 
 
 
-
-
-
-
-
-
-
   getFeatureInfo(event: L.LeafletMouseEvent) {
     console.log('Fetching feature info...');
 
@@ -1246,6 +1241,70 @@ export class MapComponent implements OnInit {
       })
       .catch(error => {
         console.error('Error fetching feature info:', error);
+      });
+  }
+
+  getFIRFeatureInfo(event: L.LeafletMouseEvent) {
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the CQL filter based on selected airport
+    const cqlFilter = this.selectFIR ? `id='${this.selectFIR}'` : '';
+
+    // Construct the GetFeatureInfo URL
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=FIR&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=FIR&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`Network response was not ok: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = `<h3>FIR Info</h3>`; // Start with Airport Info header
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Feature properties:', properties);  // Log properties for each feature
+
+            if (properties) {
+              popupContent += `
+                          
+                          <strong>Supplement Region:</strong> ${properties.supp_regio || 'N/A'}<br>
+                          <strong>Remarks:</strong> ${properties.remarks3 || 'N/A'}<br>
+                          <strong>Historic:</strong> ${properties.historic || 'N/A'}<br>
+                          <strong>Name of Company:</strong> ${properties.nom_comp || 'N/A'}<br>
+                          <strong>Responsible:</strong> ${properties.resp || 'N/A'}<br>
+                          <strong>ICAO Code:</strong> ${properties.icaocode || 'N/A'}<br>
+                          <strong>UCL:</strong> ${properties.ulc || 'N/A'}<br>
+                          <strong>Lower Limit:</strong> ${properties.lower || 'N/A'}<br>
+                          <strong>Upper Limit:</strong> ${properties.upper || 'N/A'}<br>
+                          <strong>Kind:</strong> ${properties.kind || 'N/A'}<br>
+                          <strong>Region:</strong> ${properties.region || 'N/A'}<br>
+                          <strong>FIR Name:</strong> ${properties.firname || 'N/A'}<br>
+                          <strong>Perimeter (km):</strong> ${properties.perimekm !== undefined ? properties.perimekm.toFixed(2) : 'N/A'}<br>
+                          <strong>Area (sq km):</strong> ${properties.areasqkm !== undefined ? properties.areasqkm.toFixed(2) : 'N/A'}<br>
+                          <strong>Central Latitude:</strong> ${properties.centlat !== undefined ? properties.centlat.toFixed(6) : 'N/A'}<br>
+                          <strong>Central Longitude:</strong> ${properties.centlong !== undefined ? properties.centlong.toFixed(6) : 'N/A'}<br>
+                      `;
+            }
+          });
+          // Display the popup with all collected content
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching airport feature info:', error);
       });
   }
 
@@ -1504,6 +1563,56 @@ export class MapComponent implements OnInit {
       });
   }
 
+  getAirportDetailsFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching airport feature info...');
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the CQL filter based on selected airport
+    const cqlFilter = this.selectAirport ? `id='${this.selectAirport}'` : '';
+
+    // Construct the GetFeatureInfo URL
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=airportdetails&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=airportdetails&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}&CQL_FILTER=${encodeURIComponent(cqlFilter)}`;
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          return response.text().then(text => {
+            throw new Error(`Network response was not ok: ${text}`);
+          });
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = `<h3>Airport Info</h3>`; // Start with Airport Info header
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Feature properties:', properties);  // Log properties for each feature
+
+            if (properties) {
+              popupContent += `
+                            <strong>ICAO Code:</strong> ${properties.ICAOCode}<br>
+                            <strong>Airport Name:</strong> ${properties.airport_name}<br>
+                        `;
+            }
+          });
+          // Display the popup with all collected content
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching airport feature info:', error);
+      });
+  }
+
   applyFilter(event: Event) {
     event.preventDefault();  // Prevent form submission from reloading the page
 
@@ -1578,7 +1687,6 @@ export class MapComponent implements OnInit {
   }
   activeLayer: 'convlinedata' | 'nonconvlinedata' | null = null;
 
-
   // Method to close the filter popup
   closeFilterPopup(event: Event) {
     event.preventDefault(); // Prevent the default anchor click behavior
@@ -1609,6 +1717,8 @@ export class MapComponent implements OnInit {
       // Add click event based on the layer type
       this.map.on('click', (e: L.LeafletMouseEvent) => {
         this.handleLayerClick(layerName, e);
+        // Fetch and print airport data when clicking on the map after loading the layer
+        this.getAirportDetailsFeatureInfo(e);
       });
 
     } else {
@@ -1709,6 +1819,9 @@ export class MapComponent implements OnInit {
       case 'nonconvlinedata':
         this.getNonConvFeatureInfo(event);
         break;
+      case 'FIR':
+        this.getFIRFeatureInfo(event);
+        break;
       case 'significantpoints':
         this.getWaypointFeatureInfo(event);
         break;
@@ -1723,6 +1836,9 @@ export class MapComponent implements OnInit {
         break;
       case 'aerodrome_obstacle':
         this.getAerodromeObstacleFeatureInfo(event);
+        break;
+      case 'airportdetails':
+        this.getAirportDetailsFeatureInfo(event);
         break;
       default:
         console.warn(`No click handler for layer: ${layerName}`);
