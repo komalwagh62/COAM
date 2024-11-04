@@ -27,7 +27,7 @@ export class MapComponent implements OnInit {
   }
   filterPopupVisible = false; // Controls the visibility of the filter popup
   selectedType: string = 'Conv'; // Default type (Conventional)
-  airspaceOptions: string[] = ['Airspace1', 'Airspace2', 'Airspace3'];
+  airspaceOptions: string[] = ['Class A', 'Class B', 'Class C', 'Class D', 'Class E'];
   Airform !: FormGroup;
   selectedAirport: string[] = [];
   selectedRunway: string[] = [];
@@ -1305,7 +1305,7 @@ export class MapComponent implements OnInit {
     const point = this.map.latLngToContainerPoint(event.latlng);
 
     // Create the GetFeatureInfo URL for the navaiddata layer
-    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=navaiddata&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=navaiddata&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=navaids&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=navaids&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
 
     console.log('Constructed GetFeatureInfo URL for navaiddata:', url);
 
@@ -1326,7 +1326,6 @@ export class MapComponent implements OnInit {
 
             if (properties) {
               popupContent += `
-                            <strong>ID:</strong> ${properties.id}<br>
                             <strong>Airport ICAO:</strong> ${properties.airport_icao}<br>
                             <strong>Navaid Information:</strong> ${properties.navaid_information}<br>
                         `;
@@ -1401,7 +1400,6 @@ export class MapComponent implements OnInit {
       });
   }
 
-
   getRestrictedAirspaceFeatureInfo(event: L.LeafletMouseEvent) {
     console.log('Fetching Restricted Airspace feature info...');
 
@@ -1410,7 +1408,7 @@ export class MapComponent implements OnInit {
     const point = this.map.latLngToContainerPoint(event.latlng);
 
     // Create the GetFeatureInfo URL for the restrictedairspace layer
-    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=restrictedairspace&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=restrictedairspace&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=restricted_areas&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=restricted_areas&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
 
     console.log('Constructed GetFeatureInfo URL for restrictedairspace:', url);
 
@@ -1424,22 +1422,24 @@ export class MapComponent implements OnInit {
       .then(data => {
         console.log('Response data for restrictedairspace:', data);
         if (data.features && data.features.length > 0) {
-          let popupContent = '<h3>Restricted Airspace Info</h3>'; // Initialize popup content for restricted airspace
+          let popupContent = '<h3>Restricted Airspace Info</h3>';
           data.features.forEach((feature: { properties: any; }) => {
             const properties = feature.properties;
-            console.log('Restricted Airspace feature properties:', properties); // Log properties for each feature
+            console.log('Restricted Airspace feature properties:', properties);
 
             if (properties) {
-              // Append the desired properties to the popup content
               popupContent += `
-                          
-                          <strong>Restrictive Airspace Name:</strong> ${properties.RestrictiveAirspaceName || 'N/A'}<br>
-                          <strong>Upper Limit:</strong> ${properties.UpperLimit || 'N/A'}<br>
-                      `;
+                      <strong>Designation:</strong> ${properties.designation || 'N/A'}<br>
+                      <strong>Airspace Name:</strong> ${properties.name || 'N/A'}<br>
+                      <strong>FIR:</strong> ${properties.fir || 'N/A'}<br>
+                      <strong>Type:</strong> ${properties.type || 'N/A'}<br>
+                      <strong>Upper Limit:</strong> ${properties.upper_limit || 'N/A'}<br>
+                      <strong>Lower Limit:</strong> ${properties.lower_limit || 'N/A'}<br>
+                      <strong>Remarks:</strong> ${properties.remarks || 'N/A'}<br>
+                  `;
             }
           });
 
-          // Display the popup with restricted airspace data
           L.popup()
             .setLatLng(event.latlng)
             .setContent(popupContent)
@@ -1447,6 +1447,7 @@ export class MapComponent implements OnInit {
         } else {
           console.log('No features found for restricted airspace');
         }
+
       })
       .catch(error => {
         console.error('Error fetching restricted airspace feature info:', error);
@@ -1503,23 +1504,26 @@ export class MapComponent implements OnInit {
       });
   }
 
-
   applyFilter(event: Event) {
     event.preventDefault();  // Prevent form submission from reloading the page
 
     // Get the value from the input fields
     const airwayIdInput = (document.getElementById('airwayIdInput') as HTMLInputElement).value;
     const upperLimitInput = (document.getElementById('upperLimitInput') as HTMLInputElement).value;
+    const lowerLimitInput = (document.getElementById('lowerLimitInput') as HTMLInputElement).value;
+    const meaInput = (document.getElementById('meaInput') as HTMLInputElement).value;
+    const airspaceInput = (document.getElementById('airspaceInput') as HTMLSelectElement).value;
 
     // Trim the inputs and ensure they're valid
     this.selectedAirwayId = airwayIdInput.trim();
-    const upperLimit = upperLimitInput.trim() ? `FL ${upperLimitInput.trim()}` : null;
+    const upperLimit = upperLimitInput.trim() ? `${upperLimitInput.trim()}` : null;
+    const lowerLimit = lowerLimitInput.trim() ? `${lowerLimitInput.trim()}` : null;
+    const mea = meaInput.trim();
+    const airspace = airspaceInput.trim();
 
-    console.log('Selected Airway ID:', this.selectedAirwayId);
-    console.log('Selected Upper Limit:', upperLimit);
 
-    // Apply filter if either airway_id or upper_limit is set
-    if (this.selectedAirwayId || upperLimit) {
+    // Apply filter if any of the filter fields are set
+    if (this.selectedAirwayId || upperLimit || lowerLimit || mea || airspace) {
       const layerName = 'convlinedata';
 
       if (this.convLineDataLayer) {
@@ -1533,10 +1537,16 @@ export class MapComponent implements OnInit {
         cqlFilter += `airway_id='${this.selectedAirwayId}'`;
       }
       if (upperLimit) {
-        if (cqlFilter) {
-          cqlFilter += ' AND ';
-        }
-        cqlFilter += `upper_limit='${upperLimit}'`;
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `upper_limit='${upperLimit}'`;
+      }
+      if (lowerLimit) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `lower_limit='${lowerLimit}'`;
+      }
+      if (mea) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `mea='${mea}'`;
+      }
+      if (airspace) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `airspace='${airspace}'`;
       }
 
       // Custom parameters with CQL_FILTER for the specific filters
@@ -1544,7 +1554,7 @@ export class MapComponent implements OnInit {
         layers: layerName,
         format: 'image/png',
         transparent: true,
-        CQL_FILTER: cqlFilter  // Apply filter for both airway_id and upper_limit
+        CQL_FILTER: cqlFilter  // Apply filter for airway_id, upper_limit, lower_limit, mea, and airspace
       }, {});
 
       // Add the WMS layer with the custom filter applied
@@ -1580,104 +1590,116 @@ export class MapComponent implements OnInit {
 
     // Check if the layer already exists, if not, create it
     if (!(this as any)[layerVar]) {
-        // Create the layer
-        (this as any)[layerVar] = L.tileLayer.wms(this.wmsUrl, {
-            layers: layerName,
-            format: 'image/png',
-            transparent: true,
-        });
+      // Create the layer
+      (this as any)[layerVar] = L.tileLayer.wms(this.wmsUrl, {
+        layers: layerName,
+        format: 'image/png',
+        transparent: true,
+      });
 
-        // Clear the airport layer group and add the new layer
-        this.airportLayerGroup.clearLayers();
-        (this as any)[layerVar].addTo(this.map).bringToFront();
+      // Clear the airport layer group and add the new layer
+      this.airportLayerGroup.clearLayers();
+      (this as any)[layerVar].addTo(this.map).bringToFront();
 
-        // Add click event based on the layer type
-        this.map.on('click', (e: L.LeafletMouseEvent) => {
-            console.log('Map clicked at:', e.latlng);
-            this.handleLayerClick(layerName, e);
-        });
+      // Open the filter popup and set the active layer
+      this.filterPopupVisible = true;
+      this.activeLayer = layerName as 'convlinedata' | 'nonconvlinedata';
+      console.log(`${layerName} layer added to the map`);
 
-        // Open the filter popup when the layer is loaded
-        this.filterPopupVisible = true;
-        this.activeLayer = layerName as 'convlinedata' | 'nonconvlinedata';
-        console.log(`${layerName} layer added to the map`);
+      // Add click event based on the layer type
+      this.map.on('click', (e: L.LeafletMouseEvent) => {
+        this.handleLayerClick(layerName, e);
+      });
+
     } else {
-        // Toggle the layer: remove it if it exists, add it if it's removed
-        if (this.map.hasLayer((this as any)[layerVar])) {
-            // Remove the layer and close the filter popup
-            this.map.removeLayer((this as any)[layerVar]);
-            this.map.off('click'); // Remove all click events for this layer
-            this.filterPopupVisible = false; // Close the filter popup
-            console.log(`${layerName} layer removed from the map`);
-        } else {
-            // If the layer was removed, add it back to the map and open the filter popup
-            (this as any)[layerVar].addTo(this.map).bringToFront();
-            this.filterPopupVisible = true; // Open the filter popup
-            console.log(`${layerName} layer brought to the front`);
-        }
+      // Toggle the layer: remove it if it exists, add it if it's removed
+      if (this.map.hasLayer((this as any)[layerVar])) {
+        // Remove the layer and close the filter popup
+        this.map.removeLayer((this as any)[layerVar]);
+        this.map.off('click'); // Remove all click events for this layer
+        this.filterPopupVisible = false; // Close the filter popup
+        this.activeLayer = null; // Reset active layer
+        console.log(`${layerName} layer removed from the map`);
+      } else {
+        // If the layer was removed, add it back to the map and open the filter popup
+        (this as any)[layerVar].addTo(this.map).bringToFront();
+        this.filterPopupVisible = true; // Open the filter popup
+        this.activeLayer = layerName as 'convlinedata' | 'nonconvlinedata';
+        console.log(`${layerName} layer brought to the front`);
+      }
     }
-}
+  }
 
 
-applyNonConvFilter(event: Event) {
-  event.preventDefault();  // Prevent form submission from reloading the page
+  applyNonConvFilter(event: Event) {
+    event.preventDefault();  // Prevent form submission from reloading the page
 
-  // Get the value from the input fields
-  const nonairwayIdInput = (document.getElementById('nonairwayIdInput') as HTMLInputElement).value;
-  const nonUpperLimitInput = (document.getElementById('nonUpperLimitInput') as HTMLInputElement).value;
+    // Get the value from the input fields
+    const nonairwayIdInput = (document.getElementById('nonairwayIdInput') as HTMLInputElement).value;
+    const nonupperLimitInput = (document.getElementById('nonupperLimitInput') as HTMLInputElement).value;
+    const nonlowerLimitInput = (document.getElementById('nonlowerLimitInput') as HTMLInputElement).value;
+    const nonmeaInput = (document.getElementById('nonmeaInput') as HTMLInputElement).value;
+    const nonairspaceInput = (document.getElementById('nonairspaceInput') as HTMLSelectElement).value;
 
-  // Trim the inputs and ensure they're valid
-  this.selectedAirwayId = nonairwayIdInput.trim();
-  const upperLimit = nonUpperLimitInput.trim() ? `FL ${nonUpperLimitInput.trim()}` : null;
+    // Trim the inputs and ensure they're valid
+    this.selectedAirwayId = nonairwayIdInput.trim();
+    const upperLimit = nonupperLimitInput.trim() ? `${nonupperLimitInput.trim()}` : null;
+    const lowerLimit = nonlowerLimitInput.trim() ? `${nonlowerLimitInput.trim()}` : null;
+    const mea = nonmeaInput.trim();
+    const airspace = nonairspaceInput.trim();
 
-  console.log('Selected Airway ID:', this.selectedAirwayId);
-  console.log('Selected Upper Limit:', upperLimit);
 
-  // Check if filter inputs are valid
-  if (this.selectedAirwayId || upperLimit) {
+    // Apply filter if any of the filter fields are set
+    if (this.selectedAirwayId || upperLimit || lowerLimit || mea || airspace) {
       const layerName = 'nonconvlinedata';
+
+      if (this.nonConvLineDataLayer) {
+        // If a layer already exists, remove it
+        this.map.removeLayer(this.nonConvLineDataLayer);
+      }
 
       // Create the CQL_FILTER based on selected inputs
       let cqlFilter = '';
       if (this.selectedAirwayId) {
-          cqlFilter += `airway_id='${this.selectedAirwayId}'`;
+        cqlFilter += `airway_id='${this.selectedAirwayId}'`;
       }
       if (upperLimit) {
-          if (cqlFilter) {
-              cqlFilter += ' AND ';
-          }
-          cqlFilter += `upper_limit='${upperLimit}'`;
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `upper_limit='${upperLimit}'`;
+      }
+      if (lowerLimit) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `lower_limit='${lowerLimit}'`;
+      }
+      if (mea) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `mea='${mea}'`;
+      }
+      if (airspace) {
+        cqlFilter += (cqlFilter ? ' AND ' : '') + `airspace='${airspace}'`;
       }
 
       // Custom parameters with CQL_FILTER for the specific filters
       const customParams = L.Util.extend({
-          layers: layerName,
-          format: 'image/png',
-          transparent: true,
-          CQL_FILTER: cqlFilter  // Apply filter for both airway_id and upper_limit
+        layers: layerName,
+        format: 'image/png',
+        transparent: true,
+        CQL_FILTER: cqlFilter  // Apply filter for airway_id, upper_limit, lower_limit, mea, and airspace
       }, {});
-
-      // Clear any previously added layers
-      this.airportLayerGroup.clearLayers();
-
-      // If a layer already exists, remove it
-      if (this.nonConvLineDataLayer) {
-          this.map.removeLayer(this.nonConvLineDataLayer);
-      }
 
       // Add the WMS layer with the custom filter applied
       this.nonConvLineDataLayer = L.tileLayer.wms(this.wmsUrl, customParams);
-      this.nonConvLineDataLayer.addTo(this.map).bringToFront();
 
+      // Clear the previous layers and add the new one to the map
+      this.airportLayerGroup.clearLayers();
+      this.nonConvLineDataLayer.addTo(this.map).bringToFront();
       console.log(`WMS Layer added with filter: ${cqlFilter}`);
-  } else {
+    } else {
       // If no filter is selected, remove the layer
       if (this.nonConvLineDataLayer) {
-          this.map.removeLayer(this.nonConvLineDataLayer);
-          console.log('WMS Layer removed because no filters were selected');
+        this.map.removeLayer(this.nonConvLineDataLayer);
+        console.log('WMS Layer removed because no filters were selected');
       }
+    }
   }
-}
+
 
   handleLayerClick(layerName: string, event: L.LeafletMouseEvent) {
     switch (layerName) {
@@ -1696,7 +1718,7 @@ applyNonConvFilter(event: Event) {
       case 'controlairspace':
         this.getControlAirspaceFeatureInfo(event);
         break;
-      case 'restrictedairspace':
+      case 'restricted_areas':
         this.getRestrictedAirspaceFeatureInfo(event);
         break;
       case 'aerodrome_obstacle':
