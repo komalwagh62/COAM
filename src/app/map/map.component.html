@@ -250,7 +250,7 @@
                             </button>
                         </div>
                     </div>
-                    <button mat-mini-fab class="airplane" (click)="fetchFlightData()"  type="button">
+                    <button mat-mini-fab class="airplane" (click)="fetchFlightData()" type="button">
                         <div class="icon-container">
                             <mat-icon color="primary">airplanemode_active</mat-icon>
                         </div>
@@ -269,96 +269,126 @@
                         <mat-icon *ngIf="menuOpen" color="primary">close</mat-icon> -->
                     </button>
                     <mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
-                        <div class="d-grid gap-2 col-6 mx-auto  justify-content-md-end">
+                        <div class="d-grid gap-2 col-6 mx-auto justify-content-md-end">
+                            <!-- Button for Conventional Airways -->
                             <button mat-mini-fab class="mycolor" title="Conventional Airways"
-                                (click)="loadconvlinedata($event)">
-                                <div class="icon-container"> <img src="assets/BlackAWY.png" title="Conventional Airways"
-                                        style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
+                                (click)="loadLayer($event, 'convlinedata', 'convLineDataLayer')">
+                                <div class="icon-container">
+                                    <img src="assets/BlackAWY.png" title="Conventional Airways"
+                                        style="height: 25px; width: 30px;" alt="conv">
+                                </div>
                             </button>
 
+                            <!-- Button for Non-Conventional Airways -->
                             <button mat-mini-fab class="mycolor" title="Non-Conventional Airways"
-                                (click)="loadnonconvlinedata($event)">
-                                <div class="icon-container"> <img src="assets/AWY.png" title="Non-Conventional Airways"
-                                        style="height: 25px; width: 30px;" alt="Restricted_Airspace"> </div>
+                                (click)="loadLayer($event, 'nonconvlinedata', 'nonConvLineDataLayer')">
+                                <div class="icon-container">
+                                    <img src="assets/AWY.png" title="Non-Conventional Airways"
+                                        style="height: 25px; width: 30px;" alt="noncon">
+                                </div>
                             </button>
 
+                            <!-- Button for FIR -->
                             <button mat-mini-fab class="mycolor" title="FIR" (click)="loadFIR($event)">
                                 <div class="icon-container">
                                     <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
                                 </div>
                             </button>
 
-                            <button mat-mini-fab class="mycolor" title="Waypoint" (click)="loadwaypoint($event)">
+                            <!-- Button for Waypoint -->
+                            <button mat-mini-fab class="mycolor" title="Waypoint"
+                                (click)="loadLayer($event, 'significantpoints', 'waypointLayer')">
                                 <div class="icon-container">
                                     <mat-icon title="Waypoint" color="primary">change_history</mat-icon>
                                 </div>
                             </button>
 
-                            <button mat-mini-fab class="mycolor" title="Navaids" (click)="loadnavaids($event)">
+                            <!-- Button for Navaids -->
+                            <button mat-mini-fab class="mycolor" title="Navaids"
+                                (click)="loadLayer($event, 'navaids', 'navaidsLayer')">
                                 <div class="icon-container">
                                     <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids"
-                                        alt="Controlled Airspace">
+                                        alt="Navaids">
                                 </div>
                             </button>
 
+                            <!-- Button for Controlled Airspace -->
                             <button mat-mini-fab class="mycolor" title="Controlled Airspace"
-                                (click)="loadcontrolairspace($event)">
+                                (click)="loadLayer($event, 'controlairspace', 'controlairspaceLayer')">
                                 <div class="icon-container">
-                                    <img src="assets/CA.png" style="height: 100%; width: 60%; "
+                                    <img src="assets/CA.png" style="height: 100%; width: 60%;"
                                         title="Controlled Airspace" alt="Controlled Airspace">
                                 </div>
                             </button>
 
+                            <!-- Button for Restricted Airspace -->
                             <button mat-mini-fab class="mycolor" title="Restricted Airspace"
-                                (click)="loadrestricted_areas($event)">
+                                (click)="loadLayer($event, 'restricted_areas', 'restricted_areasLayer')">
                                 <div class="icon-container">
                                     <img src="assets/Restricted_Airspace.png" title="Restricted Airspace"
                                         style="height: 25px; width: 25px;" alt="Restricted Airspace">
                                 </div>
                             </button>
 
+                            <!-- Button for Aerodrome Obstacle -->
                             <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle"
-                                (click)="loadaerodrome_obstacle($event)">
+                                (click)="loadLayer($event, 'aerodrome_obstacle', 'aerodrome_obstacleLayer')">
                                 <div class="icon-container">
                                     <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle"
-                                        style="height: 80%;  width: 50px; " alt="Aerodrome Obstacle">
-                                </div>
-                            </button>
-
-                            <button mat-mini-fab class="mycolor" title="Airport" (click)="loadairport($event)">
-                                <div class="icon-container">
-                                    <img src="assets/airport.png" title="Airport" style="height: 25px; width: 30px;"
-                                        alt="Airport">
+                                        style="height: 80%; width: 50px;" alt="Aerodrome Obstacle">
                                 </div>
                             </button>
                         </div>
                     </mat-menu>
 
+                    <div id="map" style="height: 100vh; width:100%; position: relative;">
+
+                        <!-- Filter Form for Conv Line Data -->
+                        <!-- Filter Form for Conventional Line Data -->
+                        <div id="convFilterPopup" *ngIf="activeLayer === 'convlinedata' && filterPopupVisible"
+                            class="filter-popup">
+                            <h3>Conventional Line Data Filter</h3>
+                            <form (submit)="applyFilter($event)">
+                                <label for="airwayIdInput">Airway ID:</label>
+                                <input type="text" id="airwayIdInput" placeholder="Enter Airway ID">
+
+                                <label for="upperLimitInput">Upper Limit (FL):</label>
+                                <input type="text" id="upperLimitInput" placeholder="Enter Upper Limit Ex: 460">
+
+                                <button type="submit">Apply Filter</button>
+                            </form>
+                        </div>
+
+                        <!-- Filter Form for Non-Conventional Line Data -->
+                        <div id="nonConvFilterPopup" *ngIf="activeLayer === 'nonconvlinedata' && filterPopupVisible"
+                            class="filter-popup">
+                            <h3>Non-Conventional Line Data Filter</h3>
+                            <form (submit)="applyNonConvFilter($event)">
+                                <label for="nonairwayIdInput">Airway ID:</label>
+                                <input type="text" id="nonairwayIdInput" placeholder="Enter Airway ID">
+
+                                <label for="nonUpperLimitInput">Upper Limit (FL):</label>
+                                <input type="text" id="nonUpperLimitInput" placeholder="Enter Upper Limit Ex: 460">
+
+                                <button type="submit">Apply Filter</button>
+                            </form>
+                        </div>
 
 
-                    <!-- <button class="btn live-location-button" (click)="loadairway2()" title="Thailand Conventional Airways" style="color: blue;" type="button">
-                        <div class="icon-container">
-                            <img src="assets/BlackAWY.png" title="Thailand Conventional Airways"
-                            style="height: 25px; width: 30px;" alt="Restricted_Airspace" >
-                        </div>
-                    </button>
 
-                    <button class="btn Thailand-Waypoint" (click)="loadthailandenroute()" title="Thailand Waypoint " style="color: blue;" type="button">
-                        <div class="icon-container">
-                            <i class="bi bi-triangle-fill"  title="Thailand Waypoint " ></i>
-                           
-                        </div>
-                    </button>
-                    <button class="btn World-FIR" title="World FIR"  (click)="loadFIR1()" style="color: blue;" type="button">
-                        <div class="icon-container">
-                         
-                            <i class="bi bi-pentagon" title="World FIR"></i>
-                        </div>
-                    </button> -->
-                    <!-- Other buttons -->
-                    <div id="map" style="height: 100vh; width:100%;"></div>
+                        <!-- Filter Form for Non-Conv Line Data -->
+
+
+
+                        <!-- The filters will show automatically based on the active layer -->
+
+
+
+
+
+                    </div>
                 </div>
+                <div>
+                </div>
+
             </div>
-        </mat-sidenav-content>
-    </mat-sidenav-container>
-</div>

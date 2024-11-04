@@ -1,6 +1,131 @@
 .map-container {
   position: relative;
 }
+#map {
+  position: relative;
+}
+
+.filter-button {
+  position: absolute; /* Positioned relative to the map */
+  top: 450px; /* Adjust as needed */
+  left: 1150px; /* Adjust as needed */
+  background-color: #007bff; /* Primary color */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  padding: 10px 15px; /* Padding for the button */
+  cursor: pointer; /* Pointer cursor on hover */
+  z-index: 1000; /* Ensure it appears above the map */
+}
+
+.filter-button:hover {
+  background-color: #0056b3; /* Darker shade on hover */
+}
+
+.filter-popup {
+  position: absolute; /* Positioned relative to the map */
+  top: 350px; /* Adjust to position below the button */
+  left: 1000px; /* Same as button */
+  background: white; /* Popup background color */
+  border: 1px solid #ccc; /* Border for the popup */
+  padding: 20px; /* Padding for the popup */
+  z-index: 1000; /* Ensure it appears above the map */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Shadow for better visibility */
+}
+
+.filter-popup h3 {
+  margin-top: 0; /* Remove margin from top */
+}
+
+.filter-popup .form-group {
+  margin-bottom: 15px; /* Space between form groups */
+}
+.filter-popup {
+  position: absolute;
+  top: 20px;
+  left: 20px;
+  background-color: rgba(255, 255, 255, 0.9);
+  padding: 20px;
+  border-radius: 5px;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+}
+#filterFields {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 1000; /* Higher than map to ensure visibility */
+  max-width: 300px;
+}
+
+.filter-popup {
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+  display: block;
+}
+
+.filter-popup h3 {
+  margin: 0;
+  padding: 5px 0;
+}
+
+.filter-popup-closer {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  text-decoration: none;
+  color: #333;
+  font-size: 20px;
+}
+
+.filter-popup .form-group {
+  margin-bottom: 15px;
+}
+
+.filter-popup button {
+  background-color: #007bff;
+  color: white;
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.filter-popup button:hover {
+  background-color: #0056b3;
+}
+
+.filter-popup label {
+  display: block; /* Make labels block elements */
+  margin-bottom: 5px; /* Space between label and input */
+}
+
+.filter-popup input {
+  width: 100%; /* Full width for input fields */
+  padding: 8px; /* Padding for input fields */
+  border: 1px solid #ccc; /* Border for input fields */
+  border-radius: 4px; /* Rounded corners */
+}
+
+.filter-popup button[type="submit"] {
+  background-color: #28a745; /* Green color for apply button */
+  color: white; /* Text color */
+  border: none; /* Remove border */
+  padding: 10px; /* Padding */
+  cursor: pointer; /* Pointer cursor on hover */
+}
+
+.filter-popup button[type="submit"]:hover {
+  background-color: #218838; /* Darker green on hover */
+}
+
+.filter-popup .filter-popup-closer {
+  float: right; /* Align close button to the right */
+  font-size: 20px; /* Size for close button */
+  color: #aaa; /* Color for close button */
+  cursor: pointer; /* Pointer cursor */
+}
 
 .top-right-buttons {
   position: absolute;

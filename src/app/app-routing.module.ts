@@ -8,13 +8,13 @@ import { MapViewerComponent } from './map-viewer/map-viewer.component';
 import { LeafletMapComponent } from './leaflet-map/leaflet-map.component';
 
 const routes: Routes = [
-  { path: '', redirectTo: 'map', pathMatch: 'full' },
+  { path: '', redirectTo: '', pathMatch: 'full' },
   {
     path: '', component: MapComponent, canActivate: [AuthGuard]
   },
   { path: 'login', component: LoginComponent },
   { path: 'mapview', component: MapViewerComponent, canActivate: [AuthGuard] },
-  { path: 'map', component: LeafletMapComponent }
+  { path: 'map', component: LeafletMapComponent },
 ];
 
 @NgModule({

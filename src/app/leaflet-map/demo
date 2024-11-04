@@ -1,0 +1,4627 @@
+import { Component, OnInit } from '@angular/core';
+import * as L from 'leaflet';
+import 'leaflet-rotatedmarker';
+
+@Component({
+  selector: 'app-leaflet-map',
+  templateUrl: './leaflet-map.component.html',
+  styleUrl: './leaflet-map.component.scss'
+})
+export class LeafletMapComponent implements OnInit {
+  map !: L.Map;
+  selectedType: string = 'conv'; // Default type
+  menuOpen: boolean = false;
+  filterPopupVisible: boolean = false;
+  zoomThreshold: number = 8;
+  popup: any;
+  conventionalAirwaysLayer: any;
+  nonConventionalAirwaysLayer: any;
+  waypointsPoint: any;
+  navaidsData: any;
+  controlAirspaceLayer: any;
+  restrictedAirspaceLayer: any;
+
+  constructor() { }
+
+
+  ngOnInit(): void {
+    this.initMap()
+  }
+
+  onTypeChange(event: any) {
+    this.selectedType = event.target.value;
+    // Optionally reset filter fields or update UI based on type
+  }
+
+  initMap(): void {
+
+    // this.map = L.map('map', {
+    //   center: [20.5937, 78.9629],
+    //   zoom: 5,
+
+    // });
+    if (typeof L === 'undefined') {
+      console.error('Leaflet library failed to load.');
+      return;
+  }
+    this.map = L.map('map').setView([0, 0], 2);
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+      maxZoom: 18,
+    }).addTo(this.map);
+
+    this.popup = L.popup({
+      autoPan: true,
+      
+    });
+    this.addMapLayers();
+    this.map.removeLayer(this.conventionalAirwaysLayer);
+    this.map.removeLayer(this.nonConventionalAirwaysLayer);
+    this.map.removeLayer(this.waypointsPoint);
+    this.map.removeLayer(this.navaidsData);
+    this.map.removeLayer(this.controlAirspaceLayer);
+    this.map.removeLayer(this.restrictedAirspaceLayer);
+
+   const indiaBounds: L.LatLngBoundsLiteral = [
+    [7.96553477623, 68.1766451354], 
+    [35.4940095078, 97.4025614766]  
+];
+
+// Fit the map to the bounds of India
+   this.map.fitBounds(indiaBounds);
+  }
+
+  addMapLayers(): void {
+    // Define common style for vector layers
+    const commonStyle = {
+      radius: 5,
+      fillColor: 'blue',
+      fillOpacity: 1,
+      color: 'white',
+      weight: 2
+    };
+  
+    // Create a feature group for each layer type
+    this.conventionalAirwaysLayer = L.layerGroup();
+    this.nonConventionalAirwaysLayer = L.layerGroup();
+    this.waypointsPoint = L.layerGroup();
+    this.navaidsData = L.layerGroup();
+    this.controlAirspaceLayer = L.layerGroup();
+    this.restrictedAirspaceLayer = L.layerGroup();
+    
+  
+    // Add the layers to the map
+    this.conventionalAirwaysLayer.addTo(this.map);
+    this.nonConventionalAirwaysLayer.addTo(this.map);
+    this.waypointsPoint.addTo(this.map);
+    this.navaidsData.addTo(this.map);
+    this.controlAirspaceLayer.addTo(this.map);
+    this.restrictedAirspaceLayer.addTo(this.map);
+    
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+
+  toggleFilterPopup(): void {
+    this.filterPopupVisible = !this.filterPopupVisible;
+  }
+
+  closePopUp(event: Event): void {
+    event.preventDefault(); // Prevent the default action
+    this.popup.setPosition(undefined);
+  }
+  closeFilterPopup(event: Event): void {
+    event.preventDefault();
+    this.filterPopupVisible = false;
+  }
+
+
+  fetchGeoJSONData(url: string) {
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        return null;
+      });
+  }
+
+  loadConvData(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.conventionalAirwaysLayer);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/convlinedata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToConventionalAirwaysLayer(geojson, this.conventionalAirwaysLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.conventionalAirwaysLayer);
+    }
+  }
+
+  addGeoJSONToConventionalAirwaysLayer(geojson: any, conventionalAirwaysLayer: any) {
+
+    this.conventionalAirwaysLayer.clearLayers();
+
+    const style = {
+      color: 'black',
+      weight: 2
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayConventionalAirwaysInfo(feature, event.latlng);
+        });
+      }
+    }).addTo(this.map);
+
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10], 
+      maxZoom: 8 
+  });
+
+    // this.createIconFeatures(geojsonLayer.getLayers());
+
+    this.map.addLayer(this.conventionalAirwaysLayer);
+    this.map.on('moveend', () => {
+      this.updateIconVisibility();
+    });
+  }
+
+  displayConventionalAirwaysInfo(feature: any, coordinate: any): void {
+    if (feature) {
+      const properties = feature.properties;
+      const displayProperties = [
+        'airway_id',
+        'start_point',
+        'end_point',
+        'track_magnetic',
+        'reverse_magnetic',
+        'radial_distance',
+        'upper_limit',
+        'lower_limit',
+        'airspace',
+        'mea',
+        'lateral_limits',
+        'direction_of_cruising_levels',
+        'type'
+      ];
+
+      let info = '<h3>Feature Info</h3>';
+      displayProperties.forEach(prop => {
+        if (properties.hasOwnProperty(prop)) {
+          info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+        }
+      });
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+  // createIconFeatures(features: any[]): L.Marker[] {
+  //   const iconFeatures: L.Marker[] = [];
+  //   const overlapDistance = 100; // Adjust distance as needed
+
+  //   const calculateDistance = (point1: L.LatLng, point2: L.LatLng): number => {
+  //     return point1.distanceTo(point2);
+  //   };
+
+  //   const findNewPositionAlongLine = (midPoint: L.LatLng, startPoint: L.LatLng, endPoint: L.LatLng, index: number): L.LatLng => {
+  //     const directionVector = [
+  //       endPoint.lng - startPoint.lng,
+  //       endPoint.lat - startPoint.lat
+  //     ];
+  //     const length = Math.sqrt(directionVector[0] ** 2 + directionVector[1] ** 2);
+  //     const unitVector = [directionVector[0] / length, directionVector[1] / length];
+  //     const offset = overlapDistance * (index % 2 === 0 ? 1 : -1);
+  //     const newLng = midPoint.lng + offset * unitVector[0];
+  //     const newLat = midPoint.lat + offset * unitVector[1];
+  //     return L.latLng(newLat, newLng);
+  //   };
+
+  //   features.forEach((feature: any, index: number) => {
+  //     // Handle Leaflet objects like polygons or polylines
+  //     if (feature instanceof L.Polyline || feature instanceof L.Polygon) {
+  //       let latlngs = feature.getLatLngs();
+
+  //       // Handle the case when latlngs could be nested arrays
+  //       if (Array.isArray(latlngs[0])) {
+  //         // Flatten the nested arrays (e.g., in case of MultiPolygons or MultiLines)
+  //         latlngs = (latlngs as L.LatLng[][]).flat();
+  //       }
+
+  //       if (latlngs.length > 1 && 'lat' in latlngs[0] && 'lng' in latlngs[latlngs.length - 1]) {
+  //         const startPoint = latlngs[0] as L.LatLng;
+  //         const endPoint = latlngs[latlngs.length - 1] as L.LatLng;
+  //         const midPoint = L.latLng(
+  //           (startPoint.lat + endPoint.lat) / 2,
+  //           (startPoint.lng + endPoint.lng) / 2
+  //         );
+
+  //         // Dummy angle for leaflet objects, adjust as needed
+  //         const angle = 0; 
+
+  //         const marker = L.marker(midPoint, {
+  //           icon: L.icon({
+  //             iconUrl: 'assets/right-arrow.png',
+  //             iconSize: [25, 25], // Adjust size as needed
+  //             iconAnchor: [12.5, 12.5],
+  //             // rotationAngle: angle
+  //           })
+  //         });
+
+  //         iconFeatures.push(marker);
+  //       } else {
+  //         console.warn('Leaflet object has insufficient points or invalid latlngs:', feature);
+  //       }
+  //     }
+  //     // Handle GeoJSON features
+  //     else if (feature && feature.geometry && feature.geometry.coordinates) {
+  //       const geometry = feature.geometry.coordinates;
+
+  //       if (geometry.length > 1) {
+  //         const startPoint = L.latLng(geometry[0][1], geometry[0][0]);
+  //         const endPoint = L.latLng(geometry[geometry.length - 1][1], geometry[geometry.length - 1][0]);
+  //         const midPoint = L.latLng(
+  //           (startPoint.lat + endPoint.lat) / 2,
+  //           (startPoint.lng + endPoint.lng) / 2
+  //         );
+
+  //         const trackMagnetic = parseFloat(feature.properties.track_magnetic);
+  //         const angle = (trackMagnetic - 90) * (Math.PI / 180);
+
+  //         let iconUrl = '';
+  //         const directionOfCruisingLevels = feature.properties.direction_of_cruising_levels;
+  //         if (directionOfCruisingLevels === 'Forward' || directionOfCruisingLevels === 'Backward') {
+  //           iconUrl = 'assets/right-arrow.png';
+  //         } else {
+  //           iconUrl = 'assets/rectangle.png';
+  //         }
+
+  //         const marker = L.marker(midPoint, {
+  //           icon: L.icon({
+  //             iconUrl,
+  //             iconSize: [25, 25],
+  //             iconAnchor: [12.5, 12.5],
+  //             // rotationAngle: angle
+  //           })
+  //         });
+
+  //         const overlap = iconFeatures.some((existingMarker: L.Marker) => {
+  //           const existingCoords = existingMarker.getLatLng();
+  //           const distance = calculateDistance(midPoint, existingCoords);
+  //           return distance < overlapDistance;
+  //         });
+
+  //         if (!overlap) {
+  //           iconFeatures.push(marker);
+  //         } else {
+  //           const newMidPoint = findNewPositionAlongLine(midPoint, startPoint, endPoint, index);
+  //           const newMarker = L.marker(newMidPoint, {
+  //             icon: L.icon({
+  //               iconUrl,
+  //               iconSize: [25, 25],
+  //               iconAnchor: [12.5, 12.5],
+  //               // rotationAngle: angle
+  //             })
+  //           });
+  //           iconFeatures.push(newMarker);
+  //         }
+  //       } else {
+  //         console.warn('GeoJSON feature geometry has insufficient points:', feature);
+  //       }
+  //     } else {
+  //       console.warn('Invalid feature structure:', feature);
+  //     }
+  //   });
+
+  //   return iconFeatures;
+  // }
+  
+  updateIconVisibility(): void {
+    const zoom = this.map.getZoom(); // Get current zoom level
+  
+    // Show/hide icons based on zoom level
+    if (this.conventionalAirwaysLayer) {
+      if (zoom > this.zoomThreshold) {
+        this.map.addLayer(this.conventionalAirwaysLayer);  // Show the layer
+      } else {
+        this.map.removeLayer(this.conventionalAirwaysLayer);  // Hide the layer
+      }
+    }
+  
+    if (this.nonConventionalAirwaysLayer) {
+      if (zoom > this.zoomThreshold) {
+        this.map.addLayer(this.nonConventionalAirwaysLayer);  // Show the layer
+      } else {
+        this.map.removeLayer(this.nonConventionalAirwaysLayer);  // Hide the layer
+      }
+    }
+  }
+
+  loadNonConvData(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.nonConventionalAirwaysLayer);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/nonconvlinedata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToNonConventionalAirwaysLayer(geojson, this.nonConventionalAirwaysLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.nonConventionalAirwaysLayer);
+    }
+  }
+
+  addGeoJSONToNonConventionalAirwaysLayer(geojson: any, nonConventionalAirwaysLayer: any): void {
+
+    this.nonConventionalAirwaysLayer.clearLayers();
+
+    const style = {
+      color: 'blue',
+      weight: 2
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayNonConventionalAirwaysInfo(feature, event.latlng);
+        });
+      }
+    }).addTo(this.map);
+
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10],
+      maxZoom: 8
+    });
+
+    // this.createIconFeatures(geojsonLayer.getLayers());
+    this.map.addLayer(this.nonConventionalAirwaysLayer);
+    this.map.on('moveend', () => {
+      this.updateIconVisibility();
+    });
+  }
+
+  displayNonConventionalAirwaysInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      const displayProperties = [
+        'airway_id',
+        'start_point',
+        'end_point',
+        'track_magnetic',
+        'reverse_magnetic',
+        'radial_distance',
+        'upper_limit',
+        'lower_limit',
+        'airspace',
+        'mea',
+        'lateral_limits',
+        'direction_of_cruising_levels',
+        'type'
+      ];
+
+      let info = '<h3>Feature Info</h3>';
+      displayProperties.forEach(prop => {
+        if (properties.hasOwnProperty(prop)) {
+          info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+        }
+      });
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+
+  }
+
+
+  toggleWaypoints(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.waypointsPoint);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/waypointdata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToWaypointLayerWithIcons(geojson, this.waypointsPoint);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.waypointsPoint);
+    }
+  }
+
+  addGeoJSONToWaypointLayerWithIcons(geojson: any, layer: any): void {
+    const icon = L.icon({
+      iconUrl: 'assets/bleach.png',
+      iconSize: [10, 10], // Adjust size as needed
+      // iconAnchor: [5, 10]
+    });
+
+    const geoJsonLayer = L.geoJSON(geojson, {
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, { icon });
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayWaypointInfo(feature, event.latlng);
+        });
+      }
+    }).addTo(this.map);
+
+    this.map.on('change:resolution', () => {
+      const zoom = this.map.getZoom();
+      geoJsonLayer.eachLayer((layer: any) => {
+        const feature = layer.feature;
+        if (zoom > 8) {
+          layer.bindTooltip(feature.properties, {
+            direction: 'top',
+            offset: L.point(0, -15)
+          }).openTooltip();
+        } else {
+          layer.unbindTooltip();
+        }
+      });
+    });
+  }
+
+  displayWaypointInfo(feature: any, latlng: any): void {
+    if (feature) {
+      const properties = feature.properties;
+      const info = `
+      <h3>Waypoint Info</h3>
+      <strong>ID:</strong> ${properties.id}<br>
+      <strong>Waypoints:</strong> ${properties.waypoints}<br>
+      <strong>Name of Routes:</strong> ${properties.name_of_routes}<br>
+    `;
+      L.popup()
+        .setLatLng(latlng)
+        .setContent(info)
+        .openOn(this.map);
+    }
+  }
+
+  togglenavaids(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.navaidsData);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/navaiddata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToNavaidLayerWithIcons(geojson, this.navaidsData);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.navaidsData);
+    }
+  }
+
+  addGeoJSONToNavaidLayerWithIcons(geojson: any, layer: any): void {
+
+    const icon = L.icon({
+      iconUrl: 'assets/navaid_icon.png',
+      iconSize: [30, 15], // Adjust size as needed
+      iconAnchor: [15, 15]
+    });
+
+    L.geoJSON(geojson, {
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, { icon });
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayNavaidInfo(feature, event.latlng);
+        });
+      }
+    }).addTo(this.map);
+  }
+
+  displayNavaidInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Navaid Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
+      info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
+
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+  toggleControlAirsapce(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.controlAirspaceLayer);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/controlairspace';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToControlAirspaceLayerWithIcons(geojson, this.controlAirspaceLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.controlAirspaceLayer);
+    }
+
+  }
+
+  addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+    this.controlAirspaceLayer.clearLayers();
+
+    const style = {
+      color: 'purple',
+      width: 2,
+      fillOpacity: 0 
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayControlAirspaceInfo(feature, event.latlng);
+        });
+      }
+      
+    }).addTo(this.map);
+
+    const bounds = geojsonLayer.getBounds();
+  console.log('Bounds:', bounds); // Debugging line to check bounds
+
+  this.map.fitBounds(bounds, {
+    padding: [10, 10],
+    maxZoom: 10 // Set to your desired max zoom level
+  });
+  }
+
+  displayControlAirspaceInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Control Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
+      info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+  toggleRestrictedAirsapce(event: MouseEvent): void {
+    event.stopPropagation();
+    const visible = !this.map.hasLayer(this.restrictedAirspaceLayer);
+
+    if (visible) {
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/restrictedairspace';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson, this.restrictedAirspaceLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      this.map.removeLayer(this.restrictedAirspaceLayer);
+    }
+  }
+
+  addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+    this.controlAirspaceLayer.clearLayers();
+
+    const style = {
+      color: 'red',
+      width: 2
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayRestrictedAirspaceInfo(feature, event.latlng);
+        });
+      }
+    }).addTo(this.map);
+
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10],
+      maxZoom: 10
+    });
+
+  }
+
+  displayRestrictedAirspaceInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Restricted Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Restrictiv Airspace Desgination:</strong> ${properties.RestrictivAirspaceDesgination}<br>`;
+      info += `<strong>Multiple Code:</strong> ${properties.MultipleCode}<br>`;
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+}
+
+
+
+
+<button mat-mini-fab color="none" class="manu1" [matMenuTriggerFor]="belowMenu" (click)="toggleMenu()">
+    <mat-icon color="primary">menu</mat-icon>
+  </button>
+  
+  <!-- Filter Button -->
+  <button mat-mini-fab color="none" class="filter-icon" title="Filter Data" (click)="toggleFilterPopup()">
+    <mat-icon color="primary">filter_list</mat-icon>
+  </button>
+  
+  <!-- Angular Material Menu -->
+  <mat-menu #belowMenu="matMenu" yPosition="below" class="bg-transparent" [hasBackdrop]="false">
+    <div class="d-grid gap-2 col-6 mx-auto justify-content-md-end">
+      <button mat-mini-fab class="mycolor" title="Conventional Airways" (click)="loadConvData($event)">
+        <div class="icon-container">
+          <img src="assets/BlackAWY.png" title="Conventional Airways" style="height: 25px; width: 30px;"
+            alt="Conventional Airways">
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Non-Conventional Airways" (click)="loadNonConvData($event)">
+        <div class="icon-container">
+          <img src="assets/AWY.png" title="Non-Conventional Airways" style="height: 25px; width: 30px;"
+            alt="Non-Conventional Airways">
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="FIR">
+        <div class="icon-container">
+          <i class="bi bi-pentagon text-primary-emphasis" title="FIR"></i>
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Waypoint" (click)="toggleWaypoints($event)" >
+        <div class="icon-container">
+          <mat-icon title="Waypoint" color="primary">change_history</mat-icon>
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Navaids" (click)="togglenavaids($event)" >
+        <div class="icon-container">
+          <img src="assets/navaid.png" style="height: 100%; width: 60%;" title="Navaids" alt="Navaids">
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Controlled Airspace" (click)="toggleControlAirsapce($event)" >
+        <div class="icon-container">
+          <img src="assets/CA.png" style="height: 100%; width: 60%;" title="Controlled Airspace"
+            alt="Controlled Airspace">
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Restricted Airspace" (click)="toggleRestrictedAirsapce($event)">
+        <div class="icon-container">
+          <img src="assets/Restricted_Airspace.png" title="Restricted Airspace" style="height: 25px; width: 25px;"
+            alt="Restricted Airspace">
+        </div>
+      </button>
+  
+      <button mat-mini-fab class="mycolor" title="Aerodrome Obstacle" >
+        <div class="icon-container">
+          <img src="assets/Lighted_Obstacle.png" title="Aerodrome Obstacle" style="height: 80%; width: 50px;"
+            alt="Aerodrome Obstacle">
+        </div>
+      </button>
+    </div>
+  </mat-menu>
+  
+  <!-- Filter Popup -->
+<div *ngIf="filterPopupVisible" id="filter-popup" class="filter-popup">
+    <h3>Filter By</h3>
+    <a href="#" id="filter-popup-closer" class="filter-popup-closer" (click)="closeFilterPopup($event)" >×</a>
+     
+  
+    <form>
+      <div class="form-group">
+        <label for="type">Type:</label>
+        <select id="type" [(ngModel)]="selectedType" name="type">
+          <option value="conv">Conventional Airways</option>
+          <option value="nonconv">Non-Conventional Airways</option>
+          <option value="Waypoint">Waypoint</option>
+          <option value="Navaids">Navaids</option>
+          <option value="ControlAirspace">Control Airspace</option>
+          <option value="RestrictedAirspace">Restricted Airspace</option>
+          <option value="AerodromeObstacle">Aerodrome Obstacle</option>
+        </select>
+      </div>
+   
+      <!-- Fields for Conventional Airways -->
+      <div *ngIf="selectedType === 'conv'">
+        <div class="form-group">
+          <label for="track_magnetic">Track Magnetic:</label>
+          <input type="text" id="track_magnetic" #trackMagneticInput>
+        </div>
+        <div class="form-group">
+          <label for="airway_id">Airway ID:</label>
+          <input type="text" id="airway_id" #airwayIdInput>
+        </div>
+        <div class="form-group">
+          <label for="upper_limit">Upper Limit:</label>
+          <input type="text" id="upper_limit" #upperLimitInput>
+        </div>
+        <div class="form-group">
+          <label for="lower_limit">Lower Limit:</label>
+          <input type="text" id="lower_limit" #lowerLimitInput>
+        </div>
+        <div class="form-group">
+          <label for="mea">MEA:</label>
+          <input type="text" id="mea" #meaInput>
+        </div>
+        <div class="form-group">
+          <label for="lateral_limits">Lateral Limits:</label>
+          <input type="text" id="lateral_limits" #lateralLimitsInput>
+        </div>
+        <button type="button" class="buttons">Apply</button>
+      </div>
+  
+      <!-- Fields for nonConventional Airways -->
+      <div *ngIf="selectedType === 'nonconv'">
+        <div class="form-group">
+          <label for="track_magnetic">Track Magnetic:</label>
+          <input type="text" id="track_magnetic" #trackMagneticInput>
+        </div>
+        <div class="form-group">
+          <label for="airway_id">Airway ID:</label>
+          <input type="text" id="airway_id" #airwayIdInput>
+        </div>
+        <div class="form-group">
+          <label for="upper_limit">Upper Limit:</label>
+          <input type="text" id="upper_limit" #upperLimitInput>
+        </div>
+        <div class="form-group">
+          <label for="lower_limit">Lower Limit:</label>
+          <input type="text" id="lower_limit" #lowerLimitInput>
+        </div>
+        <div class="form-group">
+          <label for="mea">MEA:</label>
+          <input type="text" id="mea" #meaInput>
+        </div>
+        <div class="form-group">
+          <label for="lateral_limits">Lateral Limits:</label>
+          <input type="text" id="lateral_limits" #lateralLimitsInput>
+        </div>
+        <button type="button" class="buttons"
+          >Apply</button>
+      </div>
+  
+      <!--  Fields for Waypoint -->
+      <div *ngIf="selectedType === 'Waypoint'">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="text" id="id" #idInput>
+        </div>
+        <div class="form-group">
+          <label for="waypoints">Waypoints:</label>
+          <input type="text" id="wayPoints" #waypointsInput>
+        </div>
+        <div class="form-group">
+          <label for="name_of_routes">Name Of Routes:</label>
+          <input type="text" id="name_of_routes" #routeNameInput>
+        </div>
+        <button type="button" class="buttons">Apply</button>
+      </div>
+  
+      <!--  Fields for novaid -->
+      <div *ngIf="selectedType === 'Navaids'">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="text" id="id" #idInput>
+        </div>
+        <div class="form-group">
+          <label for="airport_icao">Airport ICAO:</label>
+          <input type="text" id="airport_icao" #airportICAOInput>
+        </div>
+        <div class="form-group">
+          <label for="navaid_information">Navaid Information:</label>
+          <input type="text" id="navaid_information" #navaidInfoInput>
+        </div>
+        <button type="button" class="buttons">Apply</button>
+      </div>
+  
+      <!--  Fields for ControlAirspace -->
+      <div *ngIf="selectedType === 'ControlAirspace'">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="text" id="id" #idInput>
+        </div>
+        <div class="form-group">
+          <label for="AirspaceCenter">Airspace Center:</label>
+          <input type="text" id="AirspaceCenter" #airspaceCenterInput>
+        </div>
+        <div class="form-group">
+          <label for="ControlledAirspaceName">Controlled Airspace Name:</label>
+          <input type="text" id="ControlledAirspaceName" #airspaceNameInput>
+        </div>
+        <button type="button" class="buttons">Apply</button>
+      </div>
+  
+      <!--  Fields for RestrictedAirspace -->
+      <div *ngIf="selectedType === 'RestrictedAirspace'">
+        <div class="form-group">
+          <label for="id">ID:</label>
+          <input type="text" id="id" #idInput>
+        </div>
+        <div class="form-group">
+          <label for="RestrictedAirspaceName">Restricted Airspace Name:</label>
+          <input type="text" id="RestrictedAirspaceName" #restrictedAirspaceNameInput>
+        </div>
+        <div class="form-group">
+          <label for="upper_limit">Upper Limit:</label>
+          <input type="text" id="upper_limit" #upperLimitInput>
+        </div>
+        <button type="button" class="buttons">Apply</button>
+      </div>
+    </form>
+  </div>
+
+  <div id="popup" class="ol-popup">
+    <a href="#" id="popup-closer" class="ol-popup-closer" (click)="closePopUp($event)"></a>
+    <div id="popup-content"></div>
+  </div>
+
+<div id="map" class="map-container"></div>
+  
+
+
+
+
+
+
+
+
+
+
+
+displayNonConventionalAirwaysInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    const displayProperties = [
+      'airway_id',
+      'rnp_type',
+      'start_point',
+      'end_point',
+      'track_magnetic',
+      'reverse_magnetic',
+      'radial_distance',
+      'upper_limit',
+      'lower_limit',
+      'airspace',
+      'mea',
+      'lateral_limits',
+      'direction_of_cruising_levels',
+      'type'
+    ];
+
+    let info = '<h3>Feature Info</h3>';
+    displayProperties.forEach(prop => {
+      if (properties.hasOwnProperty(prop)) {
+        info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+      }
+    });
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+
+}
+
+
+loadNonConvData(event: MouseEvent): void {
+  event.stopPropagation();
+  this.selectedType = 'Non Conv'; // Update this line
+
+  // Toggle visibility of the conventional airways layer
+  const visible = !this.map.hasLayer(this.nonConventionalAirwaysLayer);
+
+  if (visible) {
+    const geojsonUrl = 'http://localhost:3002/api/nonconvlinedata';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        // Store full GeoJSON data for filtering later
+        this.nonconvGeojsonData = geojson;
+        
+        // Add the full dataset to the map initially
+        this.addGeoJSONToNonConventionalAirwaysLayer(this.nonconvGeojsonData, this.nonConventionalAirwaysLayer);
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  } else {
+    // If not visible, remove the layer from the map
+    this.map.removeLayer(this.nonConventionalAirwaysLayer);
+  }
+}
+
+applyNonConvFilter(
+  airwayId: string,
+  upperLimit: string,
+  lowerLimit: string,
+  airspace:string,
+  mea: string,
+ 
+): void {
+  // Clear the existing layer before applying the filter
+  this.nonConventionalAirwaysLayer.clearLayers();
+
+  if (this.nonconvGeojsonData) {
+    // Filter based on all the provided criteria
+    const filteredGeojson = {
+      ...this.nonconvGeojsonData,
+      features: this.nonconvGeojsonData.features.filter((feature: any) => {
+        const properties = feature.properties;
+
+        // Apply multiple conditions, empty values will not filter by that field
+        const matchesAirwayId = !airwayId || properties.airway_id === airwayId;
+        const matchesUpperLimit = !upperLimit || properties.upper_limit === upperLimit;
+        const matchesLowerLimit = !lowerLimit || properties.lower_limit === lowerLimit;
+        const matchesAirspace = !airspace || properties.airspace === airspace;
+        const matchesMea = !mea || properties.mea === mea;
+
+        // Return only features matching all criteria
+        return matchesAirwayId && matchesUpperLimit &&
+          matchesLowerLimit && matchesMea && matchesAirspace;
+      })
+    };
+
+    // Add the filtered data to the layer
+    this.addGeoJSONToNonConventionalAirwaysLayer(filteredGeojson, this.nonConventionalAirwaysLayer);
+  }
+}
+
+addGeoJSONToNonConventionalAirwaysLayer(geojson: any, nonConventionalAirwaysLayer: any) {
+  // Clear the existing layer
+  nonConventionalAirwaysLayer.clearLayers();  // Ensure we are clearing the layer properly
+
+  const style = {
+    color: 'blue',
+    weight: 1
+  };
+
+  // Create a new GeoJSON layer with the filtered or full dataset
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: style,
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayNonConventionalAirwaysInfo(feature, event.latlng);
+      });
+    }
+  });
+
+  // Add the new GeoJSON layer to the conventionalAirwaysLayer
+  nonConventionalAirwaysLayer.addLayer(geojsonLayer);
+
+  // Add the conventionalAirwaysLayer to the map
+  this.map.addLayer(nonConventionalAirwaysLayer);
+
+  // Fit the map to the bounds of the displayed data
+  this.map.fitBounds(geojsonLayer.getBounds(), {
+    padding: [10, 10],
+    maxZoom: 8
+  });
+
+  // Update visibility of icons based on zoom level
+  this.map.on('moveend', () => {
+    this.updateIconVisibility();
+  });
+}
+
+
+updateIconVisibility() {
+  const zoomLevel = this.map.getZoom();
+  const minZoom = 6;
+  const maxZoom = 10;
+
+  this.map.eachLayer((layer: any) => {
+    if (layer instanceof L.Marker) {
+      if (zoomLevel < minZoom || zoomLevel > maxZoom) {
+        layer.setOpacity(0);
+      } else {
+        layer.setOpacity(1);
+      }
+    }
+  });
+}
+
+
+toggleWaypoints(event: MouseEvent): void {
+  event.stopPropagation();
+  const visible = !this.map.hasLayer(this.waypointsPoint);
+  console.log('Layer visibility:', visible);
+
+  if (visible) {
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/waypointdata';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToWaypointLayerWithIcons(geojson, this.waypointsPoint);
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  } else {
+    this.map.removeLayer(this.waypointsPoint);
+  }
+}
+
+addGeoJSONToWaypointLayerWithIcons(geojson: any, layer: any): void {
+  const icon = L.icon({
+    iconUrl: 'assets/bleach.png',
+    iconSize: [10, 10], // Adjust size as needed
+    // iconAnchor: [5, 10]
+  });
+
+  const geoJsonLayer = L.geoJSON(geojson, {
+    pointToLayer: (feature, latlng) => {
+      return L.marker(latlng, { icon });
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayWaypointInfo(feature, event.latlng);
+      });
+    }
+  }).addTo(this.map);
+
+  this.map.on('change:resolution', () => {
+    const zoom = this.map.getZoom();
+    geoJsonLayer.eachLayer((layer: any) => {
+      const feature = layer.feature;
+      if (zoom > 8) {
+        layer.bindTooltip(feature.properties, {
+          direction: 'top',
+          offset: L.point(0, -15)
+        }).openTooltip();
+      } else {
+        layer.unbindTooltip();
+      }
+    });
+  });
+}
+
+displayWaypointInfo(feature: any, latlng: any): void {
+  if (feature) {
+    const properties = feature.properties;
+    const info = `
+    <h3>Waypoint Info</h3>
+    <strong>ID:</strong> ${properties.id}<br>
+    <strong>Waypoints:</strong> ${properties.waypoints}<br>
+    <strong>Name of Routes:</strong> ${properties.name_of_routes}<br>
+  `;
+    L.popup()
+      .setLatLng(latlng)
+      .setContent(info)
+      .openOn(this.map);
+  }
+}
+
+togglenavaids(event: MouseEvent): void {
+  event.stopPropagation();
+  const visible = !this.map.hasLayer(this.navaidsData);
+  console.log('Layer visibility:', visible);
+
+  if (visible) {
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/navaiddata';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToNavaidLayerWithIcons(geojson, this.navaidsData);
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  } else {
+    this.map.removeLayer(this.navaidsData);
+  }
+}
+
+addGeoJSONToNavaidLayerWithIcons(geojson: any, layer: any): void {
+
+  const icon = L.icon({
+    iconUrl: 'assets/navaid_icon.png',
+    iconSize: [30, 15], // Adjust size as needed
+    iconAnchor: [15, 15]
+  });
+
+  L.geoJSON(geojson, {
+    pointToLayer: (feature, latlng) => {
+      return L.marker(latlng, { icon });
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayNavaidInfo(feature, event.latlng);
+      });
+    }
+  }).addTo(this.map);
+}
+
+displayNavaidInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Navaid Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
+    info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
+
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+toggleControlAirsapce(event: MouseEvent): void {
+  event.stopPropagation();
+  const visible = !this.map.hasLayer(this.controlAirspaceLayer);
+  console.log('Layer visibility:', visible);
+
+  if (visible) {
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/controlairspace';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToControlAirspaceLayerWithIcons(geojson, this.controlAirspaceLayer);
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  } else {
+    this.map.removeLayer(this.controlAirspaceLayer);
+  }
+
+}
+
+addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+  this.controlAirspaceLayer.clearLayers();
+
+  const style = {
+    color: 'purple',
+    width: 2,
+    fillOpacity: 0 
+  };
+
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: style,
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayControlAirspaceInfo(feature, event.latlng);
+      });
+    }
+    
+  }).addTo(this.map);
+
+  const bounds = geojsonLayer.getBounds();
+console.log('Bounds:', bounds); // Debugging line to check bounds
+
+this.map.fitBounds(bounds, {
+  padding: [10, 10],
+  maxZoom: 10 // Set to your desired max zoom level
+});
+}
+
+displayControlAirspaceInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Control Airspace Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
+    info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+toggleRestrictedAirsapce(event: MouseEvent): void {
+  event.stopPropagation();
+  const visible = !this.map.hasLayer(this.restrictedAirspaceLayer);
+
+  if (visible) {
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/restrictedairspace';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson, this.restrictedAirspaceLayer);
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  } else {
+    this.map.removeLayer(this.restrictedAirspaceLayer);
+  }
+}
+
+addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+  this.controlAirspaceLayer.clearLayers();
+
+  const style = {
+    color: 'red',
+    width: 2
+  };
+
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: style,
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayRestrictedAirspaceInfo(feature, event.latlng);
+      });
+    }
+  }).addTo(this.map);
+
+  this.map.fitBounds(geojsonLayer.getBounds(), {
+    padding: [10, 10],
+    maxZoom: 10
+  });
+
+}
+
+displayRestrictedAirspaceInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Restricted Airspace Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Restrictiv Airspace Desgination:</strong> ${properties.RestrictivAirspaceDesgination}<br>`;
+    info += `<strong>Multiple Code:</strong> ${properties.MultipleCode}<br>`;
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+
+
+
+
+
+
+
+
+
+
+toggleWaypoints(event: MouseEvent): void {
+  event.stopPropagation();
+
+  // Check if the waypointsPoint layer exists, if not create it
+  if (!this.waypointsPoint) {
+    this.waypointsPoint = L.layerGroup(); // Initialize it as a layer group
+  }
+
+  // Check if the layer is already on the map
+  const visible = this.map.hasLayer(this.waypointsPoint);
+
+  if (visible) {
+    // If the layer is visible, remove it from the map
+    this.map.removeLayer(this.waypointsPoint);
+  } else {
+    // If the layer is not visible, load and add the GeoJSON data
+    const geojsonUrl = 'http://localhost:3002/api/waypointdata';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToWaypointLayerWithIcons(geojson, this.waypointsPoint);
+        this.waypointsPoint.addTo(this.map); // Add the layer group to the map
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  }
+}
+
+
+addGeoJSONToWaypointLayerWithIcons(geojson: any, layer: any): void {
+  const icon = L.icon({
+    iconUrl: 'assets/bleach.png',
+    iconSize: [10, 10], // Adjust size as needed
+  });
+
+  const geoJsonLayer = L.geoJSON(geojson, {
+    pointToLayer: (feature, latlng) => {
+      return L.marker(latlng, { icon });
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayWaypointInfo(feature, event.latlng);
+      });
+    }
+  });
+
+  layer.clearLayers(); // Ensure the layer is cleared before adding new data
+  layer.addLayer(geoJsonLayer); // Add the GeoJSON layer to the layer group
+}
+
+
+displayWaypointInfo(feature: any, latlng: any): void {
+  if (feature) {
+    const properties = feature.properties;
+    const info = `
+    <h3>Waypoint Info</h3>
+    <strong>ID:</strong> ${properties.id}<br>
+    <strong>Waypoints:</strong> ${properties.waypoints}<br>
+    <strong>Name of Routes:</strong> ${properties.name_of_routes}<br>
+  `;
+    L.popup()
+      .setLatLng(latlng)
+      .setContent(info)
+      .openOn(this.map);
+  }
+}
+
+togglenavaids(event: MouseEvent): void {
+  event.stopPropagation();
+
+  // Initialize the navaidsData layer if it doesn't exist
+  if (!this.navaidsData) {
+    this.navaidsData = L.layerGroup(); // Initialize it as a layer group
+  }
+
+  const visible = this.map.hasLayer(this.navaidsData);
+  console.log('Layer visibility:', visible);
+
+  if (visible) {
+    // If the layer is visible, remove it from the map
+    this.map.removeLayer(this.navaidsData);
+  } else {
+    // If the layer is not visible, load and add the GeoJSON data
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/navaiddata';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToNavaidLayerWithIcons(geojson, this.navaidsData);
+        this.navaidsData.addTo(this.map); // Add the layer group to the map
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  }
+}
+
+
+addGeoJSONToNavaidLayerWithIcons(geojson: any, layer: any): void {
+  const icon = L.icon({
+    iconUrl: 'assets/navaid_icon.png',
+    iconSize: [30, 15], // Adjust size as needed
+    iconAnchor: [15, 15]
+  });
+
+  const geoJsonLayer = L.geoJSON(geojson, {
+    pointToLayer: (feature, latlng) => {
+      return L.marker(latlng, { icon });
+    },
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayNavaidInfo(feature, event.latlng);
+      });
+    }
+  });
+
+  layer.clearLayers(); // Ensure the layer is cleared before adding new data
+  layer.addLayer(geoJsonLayer); // Add the GeoJSON layer to the layer group
+}
+
+
+displayNavaidInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Navaid Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
+    info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
+
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+toggleControlAirsapce(event: MouseEvent): void {
+  event.stopPropagation();
+
+  // Initialize the controlAirspaceLayer if it doesn't exist
+  if (!this.controlAirspaceLayer) {
+    this.controlAirspaceLayer = L.layerGroup(); // Create a layer group to store the features
+  }
+
+  const visible = this.map.hasLayer(this.controlAirspaceLayer); // Check if the layer is currently on the map
+  console.log('Layer visibility:', visible);
+
+  if (visible) {
+    // If the layer is currently visible, remove it from the map
+    this.map.removeLayer(this.controlAirspaceLayer);
+  } else {
+    // If the layer is not visible, load the GeoJSON data and add it to the map
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/controlairspace';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToControlAirspaceLayerWithIcons(geojson, this.controlAirspaceLayer);
+        this.controlAirspaceLayer.addTo(this.map); // Add the layer group to the map
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  }
+}
+
+
+addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+  layer.clearLayers(); // Ensure the existing layer is cleared
+
+  const style = {
+    color: 'purple',
+    weight: 2,
+    fillOpacity: 0
+  };
+
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: style,
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayControlAirspaceInfo(feature, event.latlng);
+      });
+    }
+  });
+
+  layer.addLayer(geojsonLayer); // Add the new GeoJSON layer to the existing controlAirspaceLayer group
+
+  const bounds = geojsonLayer.getBounds();
+  console.log('Bounds:', bounds); // Debugging line to check bounds
+
+  this.map.fitBounds(bounds, {
+    padding: [10, 10],
+    maxZoom: 10 // Set to your desired max zoom level
+  });
+}
+
+
+displayControlAirspaceInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Control Airspace Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
+    info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+toggleRestrictedAirsapce(event: MouseEvent): void {
+  event.stopPropagation();
+
+  // Initialize the restrictedAirspaceLayer if it doesn't exist
+  if (!this.restrictedAirspaceLayer) {
+    this.restrictedAirspaceLayer = L.layerGroup(); // Create a layer group to store the features
+  }
+
+  const visible = this.map.hasLayer(this.restrictedAirspaceLayer); // Check if the layer is currently on the map
+
+  if (visible) {
+    // If the layer is visible, remove it from the map
+    this.map.removeLayer(this.restrictedAirspaceLayer);
+  } else {
+    // If the layer is not visible, load the GeoJSON data and add it to the map
+    console.log('Loading data...');
+    const geojsonUrl = 'http://localhost:3002/api/restrictedairspace';
+    this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+      if (geojson) {
+        this.addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson, this.restrictedAirspaceLayer);
+        this.restrictedAirspaceLayer.addTo(this.map); // Add to map once loaded
+      } else {
+        console.error('Failed to load GeoJSON data.');
+      }
+    });
+  }
+}
+
+addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+  // Clear the layer before adding new data
+  this.restrictedAirspaceLayer.clearLayers();
+
+  const style = {
+    color: 'red',
+    weight: 2
+  };
+
+  const geojsonLayer = L.geoJSON(geojson, {
+    style: style,
+    onEachFeature: (feature, layer) => {
+      layer.on('click', (event) => {
+        this.displayRestrictedAirspaceInfo(feature, event.latlng);
+      });
+    }
+  });
+
+  // Add the geojsonLayer to the restrictedAirspaceLayer
+  geojsonLayer.addTo(this.restrictedAirspaceLayer);
+
+  // Fit the map to the bounds of the new data
+  this.map.fitBounds(geojsonLayer.getBounds(), {
+    padding: [10, 10],
+    maxZoom: 10
+  });
+}
+
+
+displayRestrictedAirspaceInfo(feature: any, coordinate: any): void {
+
+  if (feature) {
+    const properties = feature.properties;
+    let info = '<h3>Restricted Airspace Info</h3>';
+    info += `<strong>ID:</strong> ${properties.id}<br>`;
+    info += `<strong>Restrictiv Airspace Desgination:</strong> ${properties.RestrictivAirspaceDesgination}<br>`;
+    info += `<strong>Multiple Code:</strong> ${properties.MultipleCode}<br>`;
+
+    // Set popup content and position
+    const popup = L.popup()
+      .setLatLng(coordinate)
+      .setContent(info)
+      .openOn(this.map);
+  } else {
+    this.map.closePopup();
+  }
+}
+
+
+
+
+
+
+// icon show 
+createIconFeatures(features: any[]): any[] {
+  const iconFeatures: any[] = [];
+  const overlapDistance = 100;  // Adjust this value as needed
+
+  const calculateDistance = (point1: L.LatLng, point2: L.LatLng): number => {
+    return point1.distanceTo(point2);
+  };
+
+  const findNewPositionAlongLine = (midPoint: L.LatLng, startPoint: L.LatLng, endPoint: L.LatLng, index: number): L.LatLng => {
+    const directionVector = [
+      endPoint.lng - startPoint.lng,
+      endPoint.lat - startPoint.lat
+    ];
+    const length = Math.sqrt(directionVector[0] ** 2 + directionVector[1] ** 2);
+    const unitVector = [directionVector[0] / length, directionVector[1] / length];
+    const offset = overlapDistance * (index % 2 === 0 ? 1 : -1);
+    const newLng = midPoint.lng + offset * unitVector[0];
+    const newLat = midPoint.lat + offset * unitVector[1];
+    return L.latLng(newLat, newLng);
+  };
+
+  features.forEach((feature, index: number) => {
+      // Handle objects wrapped in a class with a 'feature' property
+      const actualFeature = feature.feature ? feature.feature : feature;
+      const coordinates = actualFeature.geometry.coordinates;
+
+      const startPoint = L.latLng(coordinates[0][1], coordinates[0][0]);
+      const endPoint = L.latLng(coordinates[coordinates.length - 1][1], coordinates[coordinates.length - 1][0]);  
+      const bounds = L.latLngBounds([startPoint, endPoint]);
+      const midPoint = bounds.getCenter();
+
+      const properties = actualFeature.properties;
+      const trackMagnetic = parseFloat(properties.track_magnetic);
+      const angle = (trackMagnetic - 90) * (Math.PI / 180);
+      let textAngle = angle;
+      if (textAngle > Math.PI / 2 || textAngle < -Math.PI / 2) {
+        textAngle += Math.PI;
+      }
+
+      const directionOfCruisingLevels = properties.direction_of_cruising_levels || 'None';
+      let iconUrl = '';
+      if (directionOfCruisingLevels === 'Forward' || directionOfCruisingLevels === 'Backward') {
+        iconUrl = 'assets/right-arrow.png'; // Image for forward/backward direction
+      } else {
+        iconUrl = 'assets/rectangle.png'; // Image for other direction
+      }
+
+      const airwayId = properties.airway_id; // Directly accessing properties
+
+      // Create a divIcon that includes an image and airwayId
+      const customIcon = L.divIcon({
+        className: 'custom-icon', // Add a custom class for styling if needed
+        html: `
+          <div style="position: relative; width: 50px; height: 50px; text-align: center;">
+            <img src="${iconUrl}" style="width: 100%; height: 100%; position: absolute; top: 0; left: 0;" />
+            <div style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold;">
+              ${airwayId}
+            </div>
+          </div>
+        `,
+        iconSize: [50, 50],
+        iconAnchor: [25, 25],
+        popupAnchor: [0, -16]
+      });
+
+      const iconFeature = L.marker(midPoint, {
+        icon: customIcon,
+        rotationAngle: angle * (180 / Math.PI)  // Rotate the icon based on track magnetic
+      }).addTo(this.map);
+
+      const overlap = iconFeatures.some(existingFeature => {
+        const existingCoords = existingFeature.getLatLng();
+        const distance = calculateDistance(midPoint, existingCoords);
+        return distance < overlapDistance;
+      });
+
+      if (!overlap) {
+        iconFeatures.push(iconFeature);
+      } else {
+        const newMidPoint = findNewPositionAlongLine(midPoint, startPoint, endPoint, index);
+        iconFeature.setLatLng(newMidPoint);  // Adjust the marker position to avoid overlap
+        iconFeatures.push(iconFeature);
+      }
+  });
+
+  return iconFeatures;
+}
+
+
+
+
+
+
+
+
+
+//
+import { Component, OnInit } from '@angular/core';
+import * as L from 'leaflet';
+import 'leaflet-rotatedmarker';
+import 'leaflet.markercluster';
+@Component({
+  selector: 'app-leaflet-map',
+  templateUrl: './leaflet-map.component.html',
+  styleUrls: ['./leaflet-map.component.scss']
+})
+export class LeafletMapComponent implements OnInit {
+  map !: L.Map;
+  selectedType!: string; // Set default type to 'Conv'
+
+  menuOpen: boolean = false;
+  filterPopupVisible: boolean = false;
+  zoomThreshold: number = 8;
+  popup: any;
+  conventionalAirwaysLayer: any;
+  nonConventionalAirwaysLayer: any;
+  waypointsPoint: any;
+  navaidsData: any;
+  aerodromeData: any;
+  controlAirspaceLayer: any;
+  restrictedAirspaceLayer: any;
+  aerodromeAirspaceLayer:any;
+  convGeojsonData: any = null;
+  nonconvGeojsonData: any = null;
+  minZoom: number = 10; // Set your desired minimum zoom level
+  maxZoom: number = 15; // Set your desired maximum zoom level
+
+
+  private iconLayerGroup: L.LayerGroup; // Declare the icon layer group here
+
+  constructor() {
+    this.conventionalAirwaysLayer = L.layerGroup(); // Initialize your layer group
+    this.nonConventionalAirwaysLayer = L.layerGroup();
+    this.iconLayerGroup = L.layerGroup(); // Initialize the icon layer group
+  }
+
+  ngOnInit(): void {
+    this.initMap();
+  }
+
+
+  initMap(): void {
+    const subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+    const maxZoom = 20;
+    const attribution = '© <a href="https://www.cognitivenavigation.com/privacy-policy/">Cognitive Navigation</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    if (typeof L === 'undefined') {
+      console.error('Leaflet library failed to load.');
+      return;
+    }
+
+    this.map = L.map('map').setView([0, 0], 2);
+    L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { subdomains, attribution }).addTo(this.map);
+
+    this.popup = L.popup({ autoPan: true });
+
+    this.addMapLayers();
+
+    // Remove default layers after adding them
+    this.map.removeLayer(this.conventionalAirwaysLayer);
+    this.map.removeLayer(this.nonConventionalAirwaysLayer);
+    this.map.removeLayer(this.waypointsPoint);
+    this.map.removeLayer(this.navaidsData);
+    this.map.removeLayer(this.controlAirspaceLayer);
+    this.map.removeLayer(this.restrictedAirspaceLayer);
+    this.map.removeLayer(this.aerodromeData);
+
+    const indiaBounds: L.LatLngBoundsLiteral = [
+      [7.96553477623, 68.1766451354],
+      [35.4940095078, 97.4025614766]
+    ];
+
+    this.map.fitBounds(indiaBounds);
+  }
+
+  addMapLayers(): void {
+    const commonStyle = {
+      radius: 5,
+      fillColor: 'blue',
+      fillOpacity: 1,
+      color: 'white',
+      weight: 2
+    };
+
+    this.conventionalAirwaysLayer = L.layerGroup();
+    this.nonConventionalAirwaysLayer = L.layerGroup();
+    this.waypointsPoint = L.layerGroup();
+    this.navaidsData = L.layerGroup();
+    this.controlAirspaceLayer = L.layerGroup();
+    this.restrictedAirspaceLayer = L.layerGroup();
+    this.aerodromeData = L.layerGroup();
+
+    this.conventionalAirwaysLayer.addTo(this.map);
+    this.nonConventionalAirwaysLayer.addTo(this.map);
+    this.waypointsPoint.addTo(this.map);
+    this.navaidsData.addTo(this.map);
+    this.controlAirspaceLayer.addTo(this.map);
+    this.restrictedAirspaceLayer.addTo(this.map);
+    this.aerodromeData.addTo(this.map);
+  }
+
+  toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  toggleFilterPopup(): void {
+    this.filterPopupVisible = !this.filterPopupVisible;
+  }
+
+  closePopUp(event: Event): void {
+    event.preventDefault();
+    this.popup.setPosition(undefined);
+  }
+
+  closeFilterPopup(event: Event): void {
+    event.preventDefault();
+    this.filterPopupVisible = false;
+  }
+
+  fetchGeoJSONData(url: string) {
+    return fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok ' + response.statusText);
+        }
+        return response.json();
+      })
+      .catch(error => {
+        console.error('Error fetching data:', error);
+        return null;
+      });
+  }
+  toggleAerodromeAirspace(event: MouseEvent): void {
+    event.stopPropagation();
+
+    // Initialize the aerodromeData layer if it doesn't exist
+    if (!this.aerodromeData) {
+        this.aerodromeData = L.layerGroup(); // Initialize it as a layer group
+    }
+
+    const visible = this.map.hasLayer(this.aerodromeData);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+        // If the layer is visible, remove it from the map
+        this.map.removeLayer(this.aerodromeData);
+    } else {
+        // If the layer is not visible, load and add the GeoJSON data
+        console.log('Loading data...');
+        const geojsonUrl = 'http://localhost:3002/api/aerodromeobstacle';
+        this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+            if (geojson) {
+                const bounds = this.map.getBounds(); // Get the current map bounds
+                this.addGeoJSONToAerodromeLayerWithIcons(geojson, this.aerodromeData, bounds);
+                this.aerodromeData.addTo(this.map); // Add the layer group to the map
+            } else {
+                console.error('Failed to load GeoJSON data.');
+            }
+        });
+    }
+  }
+
+  addGeoJSONToAerodromeLayerWithIcons(geojson: any, layer: any, bounds: L.LatLngBounds): void {
+    const icon = L.icon({
+        iconUrl: 'assets/navaid_icon.png',
+        iconSize: [30, 15], // Adjust size as needed
+        iconAnchor: [15, 15]
+    });
+
+    // Configure marker cluster group with clustering settings
+    const markers = L.markerClusterGroup({
+        disableClusteringAtZoom: 8, // Clustering will be disabled at zoom level 14 and above
+        maxClusterRadius: 10, // Adjust max cluster radius as needed
+        iconCreateFunction: function(cluster) {
+            return L.divIcon({
+                 className: 'my-cluster-icon',
+                iconSize: L.point(40, 40)
+            });
+        }
+    });
+
+    const filteredGeoJSON = {
+        ...geojson,
+        features: geojson.features.filter((feature: any) => {
+            const latlng = L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+            return bounds.contains(latlng); // Only include features within the map bounds
+        })
+    };
+
+    L.geoJSON(filteredGeoJSON, {
+        pointToLayer: (feature, latlng) => {
+            return L.marker(latlng, { icon });
+        },
+        onEachFeature: (feature, layer) => {
+            layer.on('click', (event) => {
+                this.displayAerodromeInfo(feature, event.latlng);
+            });
+        }
+    }).eachLayer(marker => {
+        markers.addLayer(marker); // Add each marker to the cluster group
+    });
+
+    layer.clearLayers(); // Clear previous data
+    layer.addLayer(markers); // Add clustered markers to the layer
+
+    // Optionally fit the map to the bounds of the markers
+    if (filteredGeoJSON.features.length > 0) {
+        const groupBounds = L.latLngBounds(filteredGeoJSON.features.map((feature: any) => {
+            return L.latLng(feature.geometry.coordinates[1], feature.geometry.coordinates[0]);
+        }));
+        this.map.fitBounds(groupBounds);
+    }
+  }
+
+  displayAerodromeInfo(feature: any, coordinate: any): void {
+    if (feature) {
+        const properties = feature.properties;
+        let info = '<h3>Aerodrome Info</h3>';
+        info += `<strong>ID:</strong> ${properties.id}<br>`; // Show ID in the popup
+
+        // Set popup content and position
+        const popup = L.popup()
+            .setLatLng(coordinate) // Set the location of the popup
+            .setContent(info) // Set the content (ID in this case)
+            .openOn(this.map); // Open the popup on the map
+    } else {
+        this.map.closePopup();
+    }
+ }
+
+  loadConvData(event: MouseEvent): void {
+    event.stopPropagation();
+    console.log("wert")
+    this.selectedType = 'Conv';
+
+    // Toggle visibility of the conventional airways layer
+    const isVisible = this.map.hasLayer(this.conventionalAirwaysLayer);
+
+    if (!isVisible) {
+      const geojsonUrl = 'http://localhost:3002/api/convlinedata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          // Store full GeoJSON data for filtering later
+          this.convGeojsonData = geojson;
+
+          // Add the full dataset to the map initially
+          this.addGeoJSONToConventionalAirwaysLayer(this.convGeojsonData, this.conventionalAirwaysLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+
+      // If not visible, remove the layer from the map
+      this.map.removeLayer(this.conventionalAirwaysLayer);
+      this.iconLayerGroup.clearLayers(); // Clear icons when layer is hidden
+      this.iconLayerGroup.remove(); // Remove the icon layer group
+    }
+  }
+
+  displayConventionalAirwaysInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      const displayProperties = [
+        'airway_id',
+        'start_point',
+        'end_point',
+        'track_magnetic',
+        'reverse_magnetic',
+        'radial_distance',
+        'upper_limit',
+        'lower_limit',
+        'airspace',
+        'mea',
+        'lateral_limits',
+        'direction_of_cruising_levels',
+        'type'
+      ];
+
+      let info = '<h3>Feature Info</h3>';
+      displayProperties.forEach(prop => {
+        if (properties.hasOwnProperty(prop)) {
+          info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+        }
+      });
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+
+  }
+  
+  applyConvFilter(
+    airwayId: string,
+    upperLimit: string,
+    lowerLimit: string,
+    airspace: string,
+    mea: string,
+
+  ): void {
+    // Clear the existing layer before applying the filter
+    this.conventionalAirwaysLayer.clearLayers();
+
+    if (this.convGeojsonData) {
+      // Filter based on all the provided criteria
+      const filteredGeojson = {
+        ...this.convGeojsonData,
+        features: this.convGeojsonData.features.filter((feature: any) => {
+          const properties = feature.properties;
+
+          // Apply multiple conditions, empty values will not filter by that field
+          const matchesAirwayId = !airwayId || properties.airway_id === airwayId;
+          const matchesUpperLimit = !upperLimit || properties.upper_limit === upperLimit;
+          const matchesLowerLimit = !lowerLimit || properties.lower_limit === lowerLimit;
+          const matchesAirspace = !airspace || properties.airspace === airspace;
+          const matchesMea = !mea || properties.mea === mea;
+
+          // Return only features matching all criteria
+          return matchesAirwayId && matchesUpperLimit &&
+            matchesLowerLimit && matchesMea && matchesAirspace;
+        })
+      };
+
+      // Add the filtered data to the layer
+      this.addGeoJSONToConventionalAirwaysLayer(filteredGeojson, this.conventionalAirwaysLayer);
+    }
+  }
+
+  addGeoJSONToConventionalAirwaysLayer(geojson: any, conventionalAirwaysLayer: any) {
+    // Clear the existing layer
+    // conventionalAirwaysLayer.clearLayers(); // Ensure we are clearing the layer properly
+    // this.iconLayerGroup.clearLayers(); // Clear previous icons
+
+    const style = {
+      color: 'black',
+      weight: 1
+    };
+
+    // Create a new GeoJSON layer with the filtered or full dataset
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayConventionalAirwaysInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    // Add the new GeoJSON layer to the conventionalAirwaysLayer
+    conventionalAirwaysLayer.addLayer(geojsonLayer);
+
+    const features = geojsonLayer.getLayers(); // Get features from your source
+    const iconFeatures = this.createIconFeatures(features);
+
+    // Add icons to the iconLayerGroup instead of the map directly
+    iconFeatures.forEach(iconFeature => {
+      this.iconLayerGroup.addLayer(iconFeature);
+    });
+
+    // Add the conventionalAirwaysLayer to the map
+    this.map.addLayer(conventionalAirwaysLayer);
+    this.iconLayerGroup.addTo(this.map); // Ensure the icon layer is added to the map
+
+    // Fit the map to the bounds of the displayed data
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10],
+      maxZoom: 8
+    });
+
+    // Update visibility of icons based on zoom level
+    this.map.on('moveend', () => {
+      this.updateIconVisibility();
+    });
+  }
+
+  createIconFeatures(features: any[]): any[] {
+
+    const iconFeatures: any[] = [];
+    const overlapDistance = 100;  // Adjust this value as needed
+
+    const calculateDistance = (point1: L.LatLng, point2: L.LatLng): number => {
+      return point1.distanceTo(point2);
+    };
+
+    const findNewPositionAlongLine = (midPoint: L.LatLng, startPoint: L.LatLng, endPoint: L.LatLng, index: number): L.LatLng => {
+      const directionVector = [
+        endPoint.lng - startPoint.lng,
+        endPoint.lat - startPoint.lat
+      ];
+      const length = Math.sqrt(directionVector[0] ** 2 + directionVector[1] ** 2);
+      const unitVector = [directionVector[0] / length, directionVector[1] / length];
+      const offset = overlapDistance * (index % 2 === 0 ? 1 : -1);
+
+      // Adjust for y offset of 20 pixels (approximately equal to ~0.00018 degrees)
+      const verticalOffset = 0.00018; // Adjust this value as needed for accuracy
+
+      const newLng = midPoint.lng + offset * unitVector[0];
+      const newLat = midPoint.lat + offset * unitVector[1] - verticalOffset; // Move down by verticalOffset
+      return L.latLng(newLat, newLng);
+    };
+
+    features.forEach((feature, index: number) => {
+      const actualFeature = feature.feature ? feature.feature : feature;
+      const coordinates = actualFeature.geometry.coordinates;
+
+      // Fix startPoint and endPoint creation
+      const startPoint = L.latLng(coordinates[0][1], coordinates[0][0]);
+      const endPoint = L.latLng(coordinates[coordinates.length - 1][1], coordinates[coordinates.length - 1][0]);
+      const bounds = L.latLngBounds([startPoint, endPoint]);
+      const midPoint = bounds.getCenter();
+
+      const properties = actualFeature.properties;
+      const trackMagnetic = parseFloat(properties.track_magnetic);
+      const angle = (trackMagnetic - 90) * (Math.PI / 180);
+
+      // Determine if the angle requires rotation for the airway ID
+      const rotationAngle = angle * (180 / Math.PI); // Convert to degrees
+      const shouldRotateId = rotationAngle > 90 || rotationAngle < -90;
+
+      // Determine the icon URL based on direction
+      const directionOfCruisingLevels = properties.direction_of_cruising_levels || 'None';
+      const iconUrl = (directionOfCruisingLevels === 'Forward' || directionOfCruisingLevels === 'Backward')
+        ? 'assets/right-arrow.png'
+        : 'assets/rectangle.png';
+
+      const airwayId = properties.airway_id;
+      const radialDistance = properties.radial_distance || 'N/A';
+      const customIcon = L.divIcon({
+        className: 'custom-icon',
+        html: `
+                <div style="position: relative; width: 30px; height: 30px; text-align: center;">
+         
+                    <img src="${iconUrl}" style="width: 100%; height: 100%; position: absolute; top: 14px; left: 0;" />
+                    <div style="position: absolute; top: 22px; left: 50%; transform: translate(-50%, 0) ${shouldRotateId ? 'rotate(180deg)' : ''}; color: white; font-weight: bold; font-size: 8px; z-index: 1;">
+                        ${airwayId}
+                    </div>
+                </div>
+            `,
+        iconSize: [30, 30],
+        iconAnchor: [15, 30],  // Adjust icon anchor as needed
+        popupAnchor: [0, -16]
+      });
+
+      const iconFeature = L.marker(midPoint, {
+        icon: customIcon,
+        rotationAngle: rotationAngle
+      }).addTo(this.map);
+
+      const overlap = iconFeatures.some(existingFeature => {
+        const existingCoords = existingFeature.getLatLng();
+        const distance = calculateDistance(midPoint, existingCoords);
+        return distance < overlapDistance;
+      });
+
+      if (!overlap) {
+        iconFeatures.push(iconFeature);
+      } else {
+        const newMidPoint = findNewPositionAlongLine(midPoint, startPoint, endPoint, index);
+        iconFeature.setLatLng(newMidPoint);  // Adjust the marker position to avoid overlap
+        iconFeatures.push(iconFeature);
+      }
+    });
+
+    return iconFeatures;
+  }
+
+  loadNonConvData(event: MouseEvent): void {
+    event.stopPropagation();
+    this.selectedType = 'Non Conv'; // Update this line
+
+    // Toggle visibility of the conventional airways layer
+    const visible = !this.map.hasLayer(this.nonConventionalAirwaysLayer);
+
+    if (visible) {
+      const geojsonUrl = 'http://localhost:3002/api/nonconvlinedata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          // Store full GeoJSON data for filtering later
+          this.nonconvGeojsonData = geojson;
+
+          // Add the full dataset to the map initially
+          this.addGeoJSONToNonConventionalAirwaysLayer(this.nonconvGeojsonData, this.nonConventionalAirwaysLayer);
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    } else {
+      // If not visible, remove the layer from the map
+      this.map.removeLayer(this.nonConventionalAirwaysLayer);
+      this.iconLayerGroup.clearLayers(); // Clear icons when layer is hidden
+      this.iconLayerGroup.remove(); // Remove the icon layer group
+    }
+  }
+
+  displayNonConventionalAirwaysInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      const displayProperties = [
+        'airway_id',
+        'rnp_type',
+        'start_point',
+        'end_point',
+        'track_magnetic',
+        'reverse_magnetic',
+        'radial_distance',
+        'upper_limit',
+        'lower_limit',
+        'airspace',
+        'mea',
+        'lateral_limits',
+        'direction_of_cruising_levels',
+        'type'
+      ];
+
+      let info = '<h3>Feature Info</h3>';
+      displayProperties.forEach(prop => {
+        if (properties.hasOwnProperty(prop)) {
+          info += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+        }
+      });
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+
+  }
+
+  applyNonConvFilter(
+    airwayId: string,
+    upperLimit: string,
+    lowerLimit: string,
+    airspace: string,
+    mea: string,
+
+  ): void {
+    // Clear the existing layer before applying the filter
+    this.nonConventionalAirwaysLayer.clearLayers();
+
+    if (this.nonconvGeojsonData) {
+      // Filter based on all the provided criteria
+      const filteredGeojson = {
+        ...this.nonconvGeojsonData,
+        features: this.nonconvGeojsonData.features.filter((feature: any) => {
+          const properties = feature.properties;
+
+          // Apply multiple conditions, empty values will not filter by that field
+          const matchesAirwayId = !airwayId || properties.airway_id === airwayId;
+          const matchesUpperLimit = !upperLimit || properties.upper_limit === upperLimit;
+          const matchesLowerLimit = !lowerLimit || properties.lower_limit === lowerLimit;
+          const matchesAirspace = !airspace || properties.airspace === airspace;
+          const matchesMea = !mea || properties.mea === mea;
+
+          // Return only features matching all criteria
+          return matchesAirwayId && matchesUpperLimit &&
+            matchesLowerLimit && matchesMea && matchesAirspace;
+        })
+      };
+
+      // Add the filtered data to the layer
+      this.addGeoJSONToNonConventionalAirwaysLayer(filteredGeojson, this.nonConventionalAirwaysLayer);
+    }
+  }
+
+  addGeoJSONToNonConventionalAirwaysLayer(geojson: any, nonConventionalAirwaysLayer: any) {
+    // Clear the existing layer
+    nonConventionalAirwaysLayer.clearLayers(); // Ensure we are clearing the layer properly
+    // this.iconLayerGroup.clearLayers(); // Clear previous icons
+
+    const style = {
+      color: 'blue',
+      weight: 1
+    };
+
+    // Create a new GeoJSON layer with the filtered or full dataset
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayNonConventionalAirwaysInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    // Add the new GeoJSON layer to the conventionalAirwaysLayer
+    nonConventionalAirwaysLayer.addLayer(geojsonLayer);
+
+    const features = geojsonLayer.getLayers(); // Get features from your source
+    const iconFeatures = this.createIconFeatures(features);
+
+    // Add icons to the iconLayerGroup instead of the map directly
+    iconFeatures.forEach(iconFeature => {
+      this.iconLayerGroup.addLayer(iconFeature);
+    });
+
+    // Add the conventionalAirwaysLayer to the map
+    this.map.addLayer(nonConventionalAirwaysLayer);
+    this.iconLayerGroup.addTo(this.map); // Ensure the icon layer is added to the map
+
+    // Fit the map to the bounds of the displayed data
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10],
+      maxZoom: 8
+    });
+
+    // Update visibility of icons based on zoom level
+    this.map.on('moveend', () => {
+      this.updateIconVisibility();
+    });
+  }
+
+  updateIconVisibility(): void {
+    const zoomLevel = this.map.getZoom();
+    const zoomThreshold = this.zoomThreshold; // Use your existing threshold for clarity
+    const areConvVisible = this.map.hasLayer(this.conventionalAirwaysLayer);
+    const areNonConvVisible = this.map.hasLayer(this.nonConventionalAirwaysLayer);
+
+    // Show/hide icons based on zoom level and layer visibility
+    if (zoomLevel > zoomThreshold) {
+      // Show icons if the zoom level exceeds the threshold
+      if (areConvVisible || areNonConvVisible) {
+        this.iconLayerGroup.eachLayer((layer: L.Layer) => {
+          if (layer instanceof L.Marker) {
+            // Now you can safely treat 'layer' as a L.Marker
+            if (!areConvVisible) {
+              if (zoomLevel < this.minZoom || zoomLevel > this.maxZoom) {
+                layer.setOpacity(0);
+              } else {
+                layer.setOpacity(1);
+              }
+            } else {
+              layer.setOpacity(1); // Keep waypoints visible regardless of zoom level
+            }
+          }
+        });
+      }
+      
+    } else {
+      // Hide icons if zoom level is below the threshold
+      this.iconLayerGroup.eachLayer((layer: L.Layer) => {
+        if (layer instanceof L.Marker) {
+          // Now you can safely treat 'layer' as a L.Marker
+          if (!areNonConvVisible) {
+            if (zoomLevel < this.minZoom || zoomLevel > this.maxZoom) {
+              layer.setOpacity(0);
+            } else {
+              layer.setOpacity(1);
+            }
+          } else {
+            layer.setOpacity(1); // Keep waypoints visible regardless of zoom level
+          }
+        }
+      });
+    }
+    
+  }
+
+
+
+  toggleWaypoints(event: MouseEvent): void {
+    event.stopPropagation();
+    // Check if the layer is already on the map
+    const visible = this.map.hasLayer(this.waypointsPoint);
+
+    if (visible) {
+      // If the layer is visible, remove it from the map
+
+      this.map.removeLayer(this.waypointsPoint);
+    } else {
+      // If the layer is not visible, load and add the GeoJSON data
+      const geojsonUrl = 'http://localhost:3002/api/waypointdata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToWaypointLayerWithIcons(geojson, this.waypointsPoint);
+          this.waypointsPoint.addTo(this.map); // Add the layer group to the map
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    }
+  }
+
+
+  addGeoJSONToWaypointLayerWithIcons(geojson: any, layer: any): void {
+    const icon = L.icon({
+      iconUrl: 'assets/bleach.png',
+      iconSize: [10, 10], // Adjust size as needed
+    });
+
+    const geoJsonLayer = L.geoJSON(geojson, {
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, { icon });
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayWaypointInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    layer.clearLayers(); // Ensure the layer is cleared before adding new data
+    layer.addLayer(geoJsonLayer); // Add the GeoJSON layer to the layer group
+  }
+
+
+  displayWaypointInfo(feature: any, latlng: any): void {
+    if (feature) {
+      const properties = feature.properties;
+      const info = `
+    <h3>Waypoint Info</h3>
+    <strong>ID:</strong> ${properties.id}<br>
+    <strong>Waypoints:</strong> ${properties.waypoints}<br>
+    <strong>Name of Routes:</strong> ${properties.name_of_routes}<br>
+  `;
+      L.popup()
+        .setLatLng(latlng)
+        .setContent(info)
+        .openOn(this.map);
+    }
+  }
+
+  togglenavaids(event: MouseEvent): void {
+    event.stopPropagation();
+
+    // Initialize the navaidsData layer if it doesn't exist
+    if (!this.navaidsData) {
+      this.navaidsData = L.layerGroup(); // Initialize it as a layer group
+    }
+
+    const visible = this.map.hasLayer(this.navaidsData);
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      // If the layer is visible, remove it from the map
+      this.map.removeLayer(this.navaidsData);
+    } else {
+      // If the layer is not visible, load and add the GeoJSON data
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/navaiddata';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToNavaidLayerWithIcons(geojson, this.navaidsData);
+          this.navaidsData.addTo(this.map); // Add the layer group to the map
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    }
+  }
+
+
+  addGeoJSONToNavaidLayerWithIcons(geojson: any, layer: any): void {
+    const icon = L.icon({
+      iconUrl: 'assets/navaid_icon.png',
+      iconSize: [30, 15], // Adjust size as needed
+      iconAnchor: [15, 15]
+    });
+
+    const geoJsonLayer = L.geoJSON(geojson, {
+      pointToLayer: (feature, latlng) => {
+        return L.marker(latlng, { icon });
+      },
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayNavaidInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    layer.clearLayers(); // Ensure the layer is cleared before adding new data
+    layer.addLayer(geoJsonLayer); // Add the GeoJSON layer to the layer group
+  }
+
+
+  displayNavaidInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Navaid Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airport ICAO:</strong> ${properties.airport_icao}<br>`;
+      info += `<strong>Navaid information:</strong> ${properties.navaid_information}<br>`;
+
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+  toggleControlAirsapce(event: MouseEvent): void {
+    event.stopPropagation();
+
+    // Initialize the controlAirspaceLayer if it doesn't exist
+    if (!this.controlAirspaceLayer) {
+      this.controlAirspaceLayer = L.layerGroup(); // Create a layer group to store the features
+    }
+
+    const visible = this.map.hasLayer(this.controlAirspaceLayer); // Check if the layer is currently on the map
+    console.log('Layer visibility:', visible);
+
+    if (visible) {
+      // If the layer is currently visible, remove it from the map
+      this.map.removeLayer(this.controlAirspaceLayer);
+    } else {
+      // If the layer is not visible, load the GeoJSON data and add it to the map
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/controlairspace';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToControlAirspaceLayerWithIcons(geojson, this.controlAirspaceLayer);
+          this.controlAirspaceLayer.addTo(this.map); // Add the layer group to the map
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    }
+  }
+
+
+  addGeoJSONToControlAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+    layer.clearLayers(); // Ensure the existing layer is cleared
+
+    const style = {
+      color: 'purple',
+      weight: 2,
+      fillOpacity: 0
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayControlAirspaceInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    layer.addLayer(geojsonLayer); // Add the new GeoJSON layer to the existing controlAirspaceLayer group
+
+    const bounds = geojsonLayer.getBounds();
+    console.log('Bounds:', bounds); // Debugging line to check bounds
+
+    this.map.fitBounds(bounds, {
+      padding: [10, 10],
+      maxZoom: 10 // Set to your desired max zoom level
+    });
+  }
+
+
+  displayControlAirspaceInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Control Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Airspace center:</strong> ${properties.AirspaceCenter}<br>`;
+      info += `<strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName}<br>`;
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+  toggleRestrictedAirsapce(event: MouseEvent): void {
+    event.stopPropagation();
+
+    // Initialize the restrictedAirspaceLayer if it doesn't exist
+    if (!this.restrictedAirspaceLayer) {
+      this.restrictedAirspaceLayer = L.layerGroup(); // Create a layer group to store the features
+    }
+
+    const visible = this.map.hasLayer(this.restrictedAirspaceLayer); // Check if the layer is currently on the map
+
+    if (visible) {
+      // If the layer is visible, remove it from the map
+      this.map.removeLayer(this.restrictedAirspaceLayer);
+    } else {
+      // If the layer is not visible, load the GeoJSON data and add it to the map
+      console.log('Loading data...');
+      const geojsonUrl = 'http://localhost:3002/api/restrictedairspace';
+      this.fetchGeoJSONData(geojsonUrl).then(geojson => {
+        if (geojson) {
+          this.addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson, this.restrictedAirspaceLayer);
+          this.restrictedAirspaceLayer.addTo(this.map); // Add to map once loaded
+        } else {
+          console.error('Failed to load GeoJSON data.');
+        }
+      });
+    }
+  }
+
+  addGeoJSONToRestrictedAirspaceLayerWithIcons(geojson: any, layer: any): void {
+
+    // Clear the layer before adding new data
+    this.restrictedAirspaceLayer.clearLayers();
+
+    const style = {
+      color: 'red',
+      weight: 2
+    };
+
+    const geojsonLayer = L.geoJSON(geojson, {
+      style: style,
+      onEachFeature: (feature, layer) => {
+        layer.on('click', (event) => {
+          this.displayRestrictedAirspaceInfo(feature, event.latlng);
+        });
+      }
+    });
+
+    // Add the geojsonLayer to the restrictedAirspaceLayer
+    geojsonLayer.addTo(this.restrictedAirspaceLayer);
+
+    // Fit the map to the bounds of the new data
+    this.map.fitBounds(geojsonLayer.getBounds(), {
+      padding: [10, 10],
+      maxZoom: 10
+    });
+  }
+
+
+  displayRestrictedAirspaceInfo(feature: any, coordinate: any): void {
+
+    if (feature) {
+      const properties = feature.properties;
+      let info = '<h3>Restricted Airspace Info</h3>';
+      info += `<strong>ID:</strong> ${properties.id}<br>`;
+      info += `<strong>Restrictiv Airspace Desgination:</strong> ${properties.RestrictivAirspaceDesgination}<br>`;
+      info += `<strong>Multiple Code:</strong> ${properties.MultipleCode}<br>`;
+
+      // Set popup content and position
+      const popup = L.popup()
+        .setLatLng(coordinate)
+        .setContent(info)
+        .openOn(this.map);
+    } else {
+      this.map.closePopup();
+    }
+  }
+
+
+
+  
+
+}
+
+
+
+
+
+
+
+
+
+
+import { Component, OnInit } from '@angular/core';
+import { FormBuilder, FormGroup } from '@angular/forms';
+import { MediaMatcher } from '@angular/cdk/layout';
+import { ChangeDetectorRef, OnDestroy } from '@angular/core';
+import * as L from 'leaflet';
+import 'leaflet-rotatedmarker';
+import { AuthService } from '../Service/auth.service';
+import { Router } from '@angular/router';
+import { StreamServiceService } from '../Service/stream-service.service';
+import { Flight, Plane } from '../target';
+import { Subscription } from 'rxjs';
+
+declare module 'leaflet' {
+  interface MarkerOptions {
+    rotationAngle?: number;
+    transform?: number;
+  }
+}
+@Component({
+  selector: 'app-map',
+  templateUrl: './map.component.html',
+  styleUrls: ['./map.component.scss']
+})
+export class MapComponent implements OnInit {
+  hasUnsavedChanges() {
+    throw new Error('Method not implemented.');
+  }
+  filterPopupVisible = false; // Controls the visibility of the filter popup
+  selectedType: string = 'Conv'; // Default type (Conventional)
+  Airform !: FormGroup;
+  selectedAirport: string[] = [];
+  selectedRunway: string[] = [];
+  selectedTypeofProcedure: string[] = [];
+  selectedProcedureName: string[] = [];
+  private markers: { [key: string]: L.Marker } = {};
+  lineGeoJsonLayer!: L.GeoJSON;
+  geoJsonLayer!: L.GeoJSON;
+  map!: L.Map;
+  airportLayerGroup!: any;
+  selectedAirwayId: string = '';
+  selectwaypoint: string = '';
+  [key: string]: any; // Allows dynamic properties
+
+  // Existing properties and methods
+
+
+
+  // http://10.98.10.103:8080/geoserver/web
+
+  // wmsUrl = "http://localhost:8080/geoserver/wms"
+  wmsUrl = 'http://10.98.11.77:8080/geoserver/wms';
+  airspaceOptions: string[] = ['Class A', 'Class B', 'Class C', 'Class D', 'Class E']; // Add your airspace options here
+  private waypointLayer!: L.TileLayer.WMS;
+  private nonConvLineDataLayer!: L.TileLayer.WMS;
+  private convLineDataLayer!: L.TileLayer.WMS;
+  private navaidsLayer!: L.TileLayer.WMS;
+  private controlairspaceLayer!: L.TileLayer.WMS;
+  private aerodrome_obstacleLayer!: L.TileLayer.WMS;
+  private restricted_areasLayer!: L.TileLayer.WMS;
+  private airportdetails!: L.TileLayer.WMS;
+  private Airway2!: L.TileLayer.WMS;
+  private thailandenroute!: L.TileLayer.WMS;
+  private FIR!: L.TileLayer.WMS;
+  private India_FIR!: L.TileLayer.WMS;
+  private subscription: Subscription | null = null;
+  menuOpen: boolean = false;
+  flightslive: Flight[] = [];
+  flights: Plane[] = [];
+  mode: 'static' | 'animation' = 'static';
+  animationIndex: number = 0;
+  animationInterval: any;
+  toggleMenu() {
+    this.menuOpen = !this.menuOpen;
+  }
+
+  menuClosed() {
+    this.menuOpen = false;
+  }
+
+  stopPropagation(event: Event) {
+    event.stopPropagation();
+  }
+
+
+
+
+  optionsAirport: { value: any; label: any; }[] = [
+    { value: 'VOBL/Bengaluru (KIA)', label: 'VOBL/BLR/Bengaluru' },
+    { value: 'VEPY/PAKYONG', label: 'VEPY/PYG/Pakyong' },
+    { value: 'VIJP/JAIPUR', label: 'VIJP/JAI/Jaipur' },];
+  optionsBengaluruKIARunway: { value: any; label: any; }[] = [];
+  optionsVIJPJAIPURRunway: { value: any; label: any; }[] = [];
+  optionsVEPYPAKYONGRunway: { value: any; label: any; }[] = [];
+  optionsRWY_09TypeofProcedure: { value: any; label: any; }[] = [];
+  optionsRWY_27TypeofProcedure: { value: any; label: any; }[] = [];
+  optionsRWY_02TypeofProcedure: { value: any; label: any; }[] = [];
+  optionsRWY_20TypeofProcedure: { value: any; label: any; }[] = [];
+  optionsRWY_09LTypeofProcedure: { value: any; label: any; }[] = [];
+  optionsRWY_27RTypeofProcedure: { value: any; label: any; }[] = [];
+  optionsVEPYTypeofProcedure: { value: any; label: any; }[] = [];
+  optionsProcedureName: { value: any; label: any; }[] = [];
+
+  isSidenavOpen = true;
+
+  toggleSidenav(snav: any) {
+    snav.toggle();
+    this.isSidenavOpen = !this.isSidenavOpen;
+  }
+
+  mobileQuery!: MediaQueryList;
+
+  fillerNav = ['Home', 'Login', 'Join Us'].concat(Array.from({ length: 0 }, (_, i) => ` ${i + 1}`));
+
+
+  private _mobileQueryListener: () => void;
+  isExpanded = false;
+  searchQuery = '';
+
+  toggleSearchBar() {
+    this.isExpanded = !this.isExpanded;
+    if (this.isExpanded) {
+      setTimeout(() => {
+        const searchInput = document.getElementById('site-search');
+        if (searchInput) {
+          searchInput.focus();
+        }
+      }, 0);
+    }
+  }
+  constructor(changeDetectorRef: ChangeDetectorRef, private flightService: StreamServiceService, media: MediaMatcher, private formbuilder: FormBuilder, private authService: AuthService, private router: Router) {
+    this.mobileQuery = media.matchMedia('(max-width: 600px)');
+    this._mobileQueryListener = () => changeDetectorRef.detectChanges();
+    this.mobileQuery.addListener(this._mobileQueryListener);
+  }
+
+  ngOnInit(): void {
+    this.Airform = this.formbuilder.group({
+      selectedAirport: [[]],
+      selectedRunway: [[]],
+      selectedTypeofProcedure: [[]],
+      selectedProcedureName: [[]],
+    });
+    this.initMap();
+    this.watchAirportChanges();
+
+  }
+
+  fetchFlightData(): void {
+    this.flightService.getLiveFlights().subscribe(
+      (data: Flight[]) => {
+        this.flightslive = data;
+        this.updateFlightMarkers();
+      },
+      error => {
+        console.error('Error fetching flight data', error);
+      }
+    );
+  }
+
+  private updateFlightMarkers(): void {
+    this.flightslive.forEach(flight => {
+      const planeSVG = `
+        <svg height="20" width="20" style="transition: transform 0.5s ease; transform: rotate(${flight.heading}deg); transform-origin: center; background: none; border: none;" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 46.876 46.876" xml:space="preserve" fill="#000000" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path style="fill:#e3b021;" d="M26.602,24.568l15.401,6.072l-0.389-4.902c-10.271-7.182-9.066-6.481-14.984-10.615V2.681 c0-1.809-1.604-2.701-3.191-2.681c-1.587-0.021-3.19,0.872-3.19,2.681v12.44c-5.918,4.134-4.714,3.434-14.985,10.615l-0.39,4.903 l15.401-6.072c0,0-0.042,15.343-0.006,15.581l-5.511,3.771v2.957l7.044-2.427h3.271l7.046,2.427V43.92l-5.513-3.771 C26.644,39.909,26.602,24.568,26.602,24.568z"></path> </g> </g></svg>
+      `;
+
+      const icon = L.divIcon({
+        html: planeSVG,
+        iconSize: [30, 30],
+        iconAnchor: [15, 15],
+        className: 'custom-plane-icon'
+      });
+
+      if (this.markers[flight.flight_id]) {
+        // Update existing marker
+        this.markers[flight.flight_id].setLatLng([flight.latitude, flight.longitude]).setIcon(icon);
+      } else {
+        // Create new marker
+        const marker = L.marker([flight.latitude, flight.longitude], { icon })
+          .bindPopup(`<b>Flight Number:</b> ${flight.flight_number}<br><b>Airline:</b> ${flight.airline_name}<br><b>Status:</b> ${flight.flight_state}`)
+          .addTo(this.map);
+        this.markers[flight.flight_id] = marker;
+      }
+    });
+  }
+
+
+  ngOnDestroy(): void {
+    this.mobileQuery.removeListener(this._mobileQueryListener);
+  }
+
+
+  // all world data
+  // private updateMapWithPlaneData(data: { satellite: Plane[]; terrestrial: Plane[] }): void {
+  //   const planes = [...data.satellite, ...data.terrestrial];
+
+  //   if (planes.length === 0) {
+  //     console.error('No valid plane data found', data);
+  //     return;
+  //   }
+
+  //   planes.forEach((plane: any) => {
+  //     const target: Plane = {
+  //       icao_address: plane.icao_address,
+  //       callsign: plane.callsign,
+  //       origin_country: plane.origin_country || '',
+  //       time_position: plane.timestamp,
+  //       last_contact: plane.ingestion_time,
+  //       longitude: parseFloat(plane.longitude),
+  //       latitude: parseFloat(plane.latitude),
+  //       altitude_baro: parseFloat(plane.altitude_baro),
+  //       on_ground: plane.on_ground,
+  //       velocity: parseFloat(plane.speed),
+  //       heading: parseFloat(plane.heading),
+  //       vertical_rate: parseFloat(plane.vertical_rate),
+  //       sensors: plane.source || '',
+  //       geo_altitude: parseFloat(plane.altitude_baro),
+  //       squawk: plane.squawk,
+  //       spi: plane.on_ground,
+  //       position_source: 1,
+  //       collection_type: plane.collection_type,
+  //     };
+
+  //     if (isNaN(target.latitude) || isNaN(target.longitude)) {
+  //       console.error('Invalid coordinates for plane:', target);
+  //       return;
+  //     }
+
+  //     const planeSVG = `
+  //     <svg height="20" width="20" style="transform-origin: center; transform: rotate(${target.heading}deg);" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 46.876 46.876" xml:space="preserve" fill="#000000" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path style="fill:#e3b021;" d="M26.602,24.568l15.401,6.072l-0.389-4.902c-10.271-7.182-9.066-6.481-14.984-10.615V2.681 c0-1.809-1.604-2.701-3.191-2.681c-1.587-0.021-3.19,0.872-3.19,2.681v12.44c-5.918,4.134-4.714,3.434-14.985,10.615l-0.39,4.903 l15.401-6.072c0,0-0.042,15.343-0.006,15.581l-5.511,3.771v2.957l7.044-2.427h3.271l7.046,2.427V43.92l-5.513-3.771 C26.644,39.909,26.602,24.568,26.602,24.568z"></path> </g> </g></svg>
+  //   `;
+
+  //     const planeIcon = L.divIcon({
+  //       html: planeSVG,
+  //       className: 'custom-plane-icon',
+  //       iconSize: [20, 20],
+  //       iconAnchor: [10, 10],
+  //     });
+
+  //     if (this.markers[target.icao_address]) {
+  //       const marker = this.markers[target.icao_address];
+  //       marker.setLatLng([target.latitude, target.longitude]);
+  //       marker.setIcon(planeIcon);
+  //     } else {
+  //       const marker = L.marker([target.latitude, target.longitude], { icon: planeIcon });
+  //       marker.addTo(this.map).on('click', () => {
+  //         this.displayPlaneData(target);
+  //       });
+
+  //       this.markers[target.icao_address] = marker;
+  //     }
+  //   });
+  // }
+
+  spiresAPI(): void {
+    if (this.subscription) {
+      this.subscription.unsubscribe();
+      this.subscription = null;
+      this.clearMarkers();
+      clearInterval(this.animationInterval);
+    } else {
+      this.subscription = this.flightService.listenToStream().subscribe({
+        next: (data: { satellite: Plane[]; terrestrial: Plane[] }) => {
+          console.log('Received plane data:', data);
+          this.updateMapWithPlaneData(data);
+        },
+        error: err => console.error('Error listening to stream', err)
+      });
+    }
+  }
+
+  private updateMapWithPlaneData(data: { satellite: Plane[]; terrestrial: Plane[] }): void {
+    const planes = [...data.satellite, ...data.terrestrial];
+
+    if (planes.length === 0) {
+      console.error('No valid plane data found', data);
+      return;
+    }
+
+    if (this.mode === 'animation') {
+      this.startAnimation(planes);
+    } else {
+      this.updateMarkers(planes);
+    }
+  }
+
+  private updateMarkers(planes: Plane[]): void {
+    planes.forEach((plane: Plane) => {
+      if (!plane.callsign || !plane.callsign.startsWith('IGO')) {
+        return;
+      }
+
+      const planeSVG = `
+        <svg height="20" width="20" style="transform-origin: center; transform: rotate(${plane.heading}deg);" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 46.876 46.876" xml:space="preserve" fill="#000000" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path style="fill:#e3b021;" d="M26.602,24.568l15.401,6.072l-0.389-4.902c-10.271-7.182-9.066-6.481-14.984-10.615V2.681 c0-1.809-1.604-2.701-3.191-2.681c-1.587-0.021-3.19,0.872-3.19,2.681v12.44c-5.918,4.134-4.714,3.434-14.985,10.615l-0.39,4.903 l15.401-6.072c0,0-0.042,15.343-0.006,15.581l-5.511,3.771v2.957l7.044-2.427h3.271l7.046,2.427V43.92l-5.513-3.771 C26.644,39.909,26.602,24.568,26.602,24.568z"></path> </g> </g></svg>
+      `;
+
+      const planeIcon = L.divIcon({
+        html: planeSVG,
+        className: 'custom-plane-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+
+      if (this.markers[plane.icao_address]) {
+        const marker = this.markers[plane.icao_address];
+        marker.setLatLng([plane.latitude, plane.longitude]);
+        marker.setIcon(planeIcon);
+      } else {
+        const marker = L.marker([plane.latitude, plane.longitude], { icon: planeIcon });
+        marker.addTo(this.map).on('click', () => {
+          this.displayPlaneData(plane);
+        });
+
+        this.markers[plane.icao_address] = marker;
+      }
+    });
+  }
+
+  private startAnimation(planes: Plane[]): void {
+    clearInterval(this.animationInterval);
+
+    this.animationInterval = setInterval(() => {
+      const plane = planes[this.animationIndex];
+      this.animationIndex = (this.animationIndex + 1) % planes.length;
+
+      if (!plane.callsign || !plane.callsign.startsWith('IGO')) {
+        return;
+      }
+
+      const planeSVG = `
+        <svg height="20" width="20" style="transform-origin: center; transform: rotate(${plane.heading}deg);" version="1.1" id="Capa_1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 46.876 46.876" xml:space="preserve" fill="#000000" stroke="#000000"><g id="SVGRepo_bgCarrier" stroke-width="0"></g><g id="SVGRepo_tracerCarrier" stroke-linecap="round" stroke-linejoin="round"></g><g id="SVGRepo_iconCarrier"> <g> <path style="fill:#e3b021;" d="M26.602,24.568l15.401,6.072l-0.389-4.902c-10.271-7.182-9.066-6.481-14.984-10.615V2.681 c0-1.809-1.604-2.701-3.191-2.681c-1.587-0.021-3.19,0.872-3.19,2.681v12.44c-5.918,4.134-4.714,3.434-14.985,10.615l-0.39,4.903 l15.401-6.072c0,0-0.042,15.343-0.006,15.581l-5.511,3.771v2.957l7.044-2.427h3.271l7.046,2.427V43.92l-5.513-3.771 C26.644,39.909,26.602,24.568,26.602,24.568z"></path> </g> </g></svg>
+      `;
+
+      const planeIcon = L.divIcon({
+        html: planeSVG,
+        className: 'custom-plane-icon',
+        iconSize: [20, 20],
+        iconAnchor: [10, 10],
+      });
+
+      if (this.markers[plane.icao_address]) {
+        const marker = this.markers[plane.icao_address];
+        marker.setLatLng([plane.latitude, plane.longitude]);
+        marker.setIcon(planeIcon);
+      } else {
+        const marker = L.marker([plane.latitude, plane.longitude], { icon: planeIcon });
+        marker.addTo(this.map).on('click', () => {
+          this.displayPlaneData(plane);
+        });
+
+        this.markers[plane.icao_address] = marker;
+      }
+    }, 1000); // Adjust interval as needed
+  }
+
+  private displayPlaneData(plane: Plane): void {
+    L.popup()
+      .setLatLng([plane.latitude, plane.longitude])
+      .setContent(`
+      <div>
+        <p><strong>ICAO Address:</strong> ${plane.icao_address}</p>
+        <p><strong>Callsign:</strong> ${plane.callsign}</p>
+        <p><strong>Origin Country:</strong> ${plane.origin_country}</p>
+        <p><strong>Longitude:</strong> ${plane.longitude}</p>
+        <p><strong>Latitude:</strong> ${plane.latitude}</p>
+        <p><strong>Altitude:</strong> ${plane.altitude_baro}</p>
+        <p><strong>Velocity:</strong> ${plane.velocity}</p>
+        <p><strong>Heading:</strong> ${plane.heading}</p>
+        <p><strong>Vertical Rate:</strong> ${plane.vertical_rate}</p>
+        <p><strong>Geo Altitude:</strong> ${plane.geo_altitude}</p>
+        <p><strong>Squawk:</strong> ${plane.squawk}</p>
+      </div>
+    `)
+      .openOn(this.map);
+  }
+
+  private clearMarkers(): void {
+    Object.keys(this.markers).forEach(key => {
+      this.map.removeLayer(this.markers[key]);
+    });
+    this.markers = {};
+  }
+
+  initMap(): void {
+    const subdomains = ['mt0', 'mt1', 'mt2', 'mt3'];
+    const maxZoom = 20;
+    const attribution = '© <a href="https://www.cognitivenavigation.com/privacy-policy/">Cognitive Navigation</a> | <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors';
+
+    this.map = L.map('map', { zoomControl: false, attributionControl: true }).setView([20.5937, 78.9629], 5);
+
+    const streets = L.tileLayer('https://{s}.google.com/vt/lyrs=m&x={x}&y={y}&z={z}', { subdomains, attribution });
+    const darkMatter = L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { attribution });
+    const satellite = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', { attribution });
+    const navigation = L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}', {
+      attribution,
+      maxZoom: 16
+    });
+    const googleHybrid = L.tileLayer('http://{s}.google.com/vt/lyrs=s,h&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
+    const googleSat = L.tileLayer('http://{s}.google.com/vt/lyrs=s&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
+    const googleTerrain = L.tileLayer('http://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}', { maxZoom, subdomains, attribution });
+
+    const baseMaps = {
+      'Streets': streets,
+      'Satellite': satellite,
+      'Navigation': navigation,
+      'Hybrid': googleHybrid,
+      'Satellite Google': googleSat,
+      'Terrain': googleTerrain,
+      'Dark': darkMatter
+    };
+
+
+    L.control.layers(baseMaps, {}, { position: 'topleft' }).addTo(this.map);
+    navigation.addTo(this.map);
+    L.control.scale({ position: 'bottomright', metric: false }).addTo(this.map);
+    L.control.zoom({ position: 'bottomright' }).addTo(this.map);
+    this.map.on('wheel', (event: L.LeafletEvent) => { }, { passive: true });
+    this.airportLayerGroup = L.layerGroup().addTo(this.map);
+
+  }
+
+
+  updateLayers(): void {
+    // Clear existing layers
+    this.airportLayerGroup.clearLayers();
+
+    const loadSIDProcedure = async (procedureName: string, pointFileName: string, lineFileName: string, iconFileName: string) => {
+      try {
+
+        // Load runway GeoJSON data
+        const runwayIcon = L.icon({
+          iconUrl: 'assets/AKTIM_7A/RWY.png',
+          iconSize: [20, 30],
+          iconAnchor: [10, 30]
+        });
+
+        const runwayResponse = await fetch(iconFileName);
+        const runwayData = await runwayResponse.json();
+
+        const geoLayer = L.geoJSON(runwayData, {
+          pointToLayer: (feature, latlng) => {
+            const trueB = parseFloat(feature.properties.True_B);
+            let marker: L.Marker<any>;
+
+            if (!isNaN(trueB)) {
+              const rotationAngle = trueB
+              console.log(rotationAngle)
+              marker = L.marker(latlng, { icon: runwayIcon, rotationAngle: rotationAngle });
+            } else {
+              console.error('Invalid True_B value:', feature.properties.True_B);
+              // Create a transparent marker as a fallback
+              marker = L.marker(latlng, { opacity: 0 });
+            }
+
+            return marker;
+          }
+        });
+
+        this.airportLayerGroup.addLayer(geoLayer);
+        // this.map.fitBounds(geoLayer.getBounds());
+
+        // Load Point_SID GeoJSON data
+        const pointResponse = await fetch(pointFileName);
+        const pointData = await pointResponse.json();
+
+        const stepIcon = L.icon({
+          iconUrl: 'assets/AKTIM_7A/Fly-by.png',
+          iconSize: [40, 40],
+          popupAnchor: [-3, -76],
+          // bgPos: [0, 0],
+        });
+
+        const geoJsonLayer = L.geoJSON(pointData, {
+          pointToLayer: (feature, latlng) => {
+            const marker = L.marker(latlng, { icon: stepIcon });
+
+            let tooltipContent = '';
+            if (feature.properties.Name) {
+              tooltipContent += `<b>${feature.properties.Name}</b><br>`;
+            }
+
+            if (feature.properties.Altitude) {
+              tooltipContent += `${feature.properties.Altitude}<br>`;
+            }
+            if (feature.properties.Speed) {
+              tooltipContent += `${feature.properties.Speed}<br>`;
+            }
+            if (feature.properties.Speed1) {
+              tooltipContent += `${feature.properties.Speed1}`;
+            }
+
+            if (tooltipContent !== '') {
+              marker.bindTooltip(tooltipContent, {
+                permanent: true,
+                direction: 'bottom',
+                className: 'labelstyle',
+                offset: L.point(25, 0),
+              });
+            }
+
+            return marker;
+          }
+
+        });
+
+        this.airportLayerGroup.addLayer(geoJsonLayer);
+        this.map.fitBounds(geoJsonLayer.getBounds());
+
+        // Load Line_SID GeoJSON data
+        const lineResponse = await fetch(lineFileName);
+        const lineData = await lineResponse.json();
+
+        const lineFeatures = lineData.features; // Assuming lineData is your GeoJSON data
+
+        this.lineGeoJsonLayer = L.geoJSON(lineData, {
+          style: {
+            color: 'black', // Set line color
+            weight: 2 // Set line weight
+          },
+
+          onEachFeature: (feature, layer) => {
+
+            const currentIndex = lineFeatures.indexOf(feature); // Get the index of the current feature
+
+            if (feature.properties) {
+              const bearing = feature.properties.Bearing;
+              const distance = feature.properties.Distance;
+
+              // Check if either Bearing or Distance is available
+              if (bearing !== null || distance !== null) {
+                // Get the coordinates of the line
+                let coordinates: number[][] = [];
+                if (feature.geometry.type === 'MultiLineString') {
+                  coordinates = feature.geometry.coordinates[0]; // For MultiLineString, choose the first line
+                } else if (feature.geometry.type === 'LineString') {
+                  coordinates = feature.geometry.coordinates;
+                }
+
+                const start = coordinates[0];
+                const end = coordinates[1];
+
+                // Calculate the angle between start and end points in radians
+                let angle = Math.atan2(end[1] - start[1], end[0] - start[0]);
+
+                // Ensure angle is positive
+                if (angle < 0) {
+                  angle += 2 * Math.PI;
+                }
+
+                // Calculate the center point of the line segment
+                const center = [(start[0] + end[0]) / 2, (start[1] + end[1]) / 2];
+
+                let rotationAngle; // Declare rotationAngle variable here
+
+                if (distance !== null) {
+                  // Create a custom icon
+                  const customIcon = L.icon({
+                    iconUrl: 'assets/AKTIM_7A/penta.png',
+                    iconSize: [44, 36],
+                    iconAnchor: [20, 19]
+                  });
+
+                  // Calculate the rotation angle in degrees for the icon
+                  let iconRotationAngle = parseFloat(bearing);
+
+                  // If current bearing is null, use the next bearing value
+                  if (isNaN(iconRotationAngle)) {
+                    const nextIndex = currentIndex + 1;
+                    if (nextIndex < lineFeatures.length) {
+                      const nextFeature = lineFeatures[nextIndex];
+                      if (nextFeature.properties && nextFeature.properties.Bearing) {
+                        iconRotationAngle = parseFloat(nextFeature.properties.Bearing);
+                      }
+                    }
+                  }
+
+                  // Create a marker with a custom icon at the center point and rotation
+                  const marker = L.marker(L.latLng(center[1], center[0]), {
+                    icon: customIcon,
+                    rotationAngle: iconRotationAngle // Set rotation angle based on line direction or bearing
+                  }).addTo(this.airportLayerGroup);
+
+                  // Calculate the rotation angle for the distance text relative to the line direction
+                  if (iconRotationAngle !== null) {
+                    if (iconRotationAngle >= 0 && iconRotationAngle < 180) {
+                      // Angle between 0 and 180 degrees
+                      rotationAngle = iconRotationAngle - 90;
+                    } else {
+                      // Angle between 180 and 360 degrees
+                      rotationAngle = iconRotationAngle + 90;
+                    }
+                  } else {
+                    // Default rotation angle if iconRotationAngle is null
+                    rotationAngle = angle * (180 / Math.PI) - 90;
+                  }
+
+                  // Bind tooltip with distance text to the marker, rotate dynamically based on the line direction
+                  const distanceTooltip = `<div style="transform: rotate(${rotationAngle}deg); font-size: 8px;">${feature.properties.Distance}</div>`;
+                  marker.bindTooltip(distanceTooltip, {
+                    permanent: true,
+                    direction: 'center',
+                    className: 'labelstyle',
+                    opacity: 1
+                  });
+                }
+
+                if (bearing !== null) {
+                  // Add bearing text outside the icon
+                  const bearingMarker = L.marker(L.latLng(center[1], center[0]), {
+                    rotationAngle: rotationAngle, // Set rotation angle
+                    icon: L.divIcon({
+                      className: 'bearing-label', // Custom CSS class for styling
+                      html: `<div style="font-size: 8px;">${feature.properties.Bearing}</div>`, // HTML content for the bearing text
+                      iconAnchor: [10, 20] // Adjust the icon anchor to shift the bearing text above by 20 pixels
+                    })
+                  }).addTo(this.airportLayerGroup);
+                }
+              }
+
+            }
+          }
+        });
+
+        this.airportLayerGroup.addLayer(this.lineGeoJsonLayer);
+
+
+      } catch (error) {
+        console.error(`Error loading ${procedureName} SID procedure:`, error);
+      }
+    };
+
+    // Mapping of procedure names to their respective file paths
+    const proceduresMap: { [key: string]: [string, string, string] } = {
+      //VOBL_RWY9L SID procedure
+      'AKTIM 7A': ['assets/VOBL_RWY9L/SID/AKTIM7A/AKTIM7A_Point.geojson', 'assets/VOBL_RWY9L/SID/AKTIM7A/AKTIM7A_line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'ANIRO 7A': ['assets/VOBL_RWY9L/SID/ANIRO7A/ANIRO7A_Point.geojson', 'assets/VOBL_RWY9L/SID/ANIRO7A/ANIRO7A_line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'GUNIM 7A': ['assets/VOBL_RWY9L/SID/GUNIM7A/GUNIM7A_Point.geojson', 'assets/VOBL_RWY9L/SID/GUNIM7A/GUNIM7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'VAGPU 7A': ['assets/VOBL_RWY9L/SID/VAGPU7A/VAGPU7A_Point.geojson', 'assets/VOBL_RWY9L/SID/VAGPU7A/VAGPU7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'GUNIM 7L': ['assets/VOBL_RWY9L/SID/GUNIM7L/GUNIM7L_Point.geojson', 'assets/VOBL_RWY9L/SID/GUNIM7L/GUNIM7L_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'OPAMO 7A': ['assets/VOBL_RWY9L/SID/OPAMO7A/OPAMO7A_Point.geojson', 'assets/VOBL_RWY9L/SID/OPAMO7A/OPAMO7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'PEXEG 7A': ['assets/VOBL_RWY9L/SID/PEXEG7A/PEXEG7A_Point.geojson', 'assets/VOBL_RWY9L/SID/PEXEG7A/PEXEG7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'TULNA 7A': ['assets/VOBL_RWY9L/SID/TULNA7A/TULNA7A_Point.geojson', 'assets/VOBL_RWY9L/SID/TULNA7A/TULNA7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'VEMBO 7A': ['assets/VOBL_RWY9L/SID/VEMBO7A/VEMBO7A_Point.geojson', 'assets/VOBL_RWY9L/SID/VEMBO7A/VEMBO7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'LATID 7A': ['assets/VOBL_RWY9L/SID/LATID7A/LATID7A_Point.geojson', 'assets/VOBL_RWY9L/SID/LATID7A/LATID7A_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'SAI 7A': ['assets/VOBL_RWY9L/SID/SAI7A/SAI7A_Point.geojson', 'assets/VOBL_RWY9L/SID/SAI7A/SAI7A_Line.geojson', ''],
+      //VOBL_RWY9L STAR procedure
+      'GUNIM 7E': ['assets/VOBL_RWY9L/STAR/GUNIM7E/GUNIM7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/GUNIM7E/GUNIM7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'ADKAL 7E': ['assets/VOBL_RWY9L/STAR/ADKAL7E/ADKAL7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/ADKAL7E/ADKAL7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'LEKAP 7E': ['assets/VOBL_RWY9L/STAR/LEKAP7E/LEKAP7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/LEKAP7E/LEKAP7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'PEXEG 7E': ['assets/VOBL_RWY9L/STAR/PEXEG7E/PEXEG7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/PEXEG7E/PEXEG7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'RIKBU 7E': ['assets/VOBL_RWY9L/STAR/RIKBU7E/RIKBU7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/RIKBU7E/RIKBU7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'SUSIK 7E': ['assets/VOBL_RWY9L/STAR/SUSIK7E/SUSIK7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/SUSIK7E/SUSIK7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'SUSIK 7J': ['assets/VOBL_RWY9L/STAR/SUSIK7J/SUSIK7J_Point.geojson', 'assets/VOBL_RWY9L/STAR/SUSIK7J/SUSIK7J_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'TELUV 7E': ['assets/VOBL_RWY9L/STAR/TELUV7E/TELUV7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/TELUV7E/TELUV7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'UGABA 7E': ['assets/VOBL_RWY9L/STAR/UGABA7E/UGABA7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/UGABA7E/UGABA7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      'XIVIL 7E': ['assets/VOBL_RWY9L/STAR/XIVIL7E/XIVIL7E_Point.geojson', 'assets/VOBL_RWY9L/STAR/XIVIL7E/XIVIL7E_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      // VOBL_RWY9L APCH procedure
+      'RNP': ['assets/VOBL_RWY9L/APCH/RNP/RNp_RWY_09L_Point.geojson', 'assets/VOBL_RWY9L/APCH/RNP/RNp_RWY_09L_Line.geojson', 'assets/RWY/VOBL_RWY09L.geojson'],
+      // VOBL_RWY27R sid procedure
+      'AKTIM 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/AKTIM7B/AKTIM7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/AKTIM7B/AKTIM7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'ANIRO 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/ANIRO7B/ANIRO7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/ANIRO7B/ANIRO7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'GUNIM 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/GUNIM7B/GUNIM7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/GUNIM7B/GUNIM7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'GUNIM 7J': ['assets/VOBL_RWY27R/SID27R_VOBL/GUNIM7J/GUNIM7J_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/GUNIM7J/GUNIM7J_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'OPAMO 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/OPAMO7B/OPAMO7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/OPAMO7B/OPAMO7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'SAI 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/SAI7B/SAI7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/SAI7B/SAI7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'PEXEG 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/PEXEG7B/PEXEG7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/PEXEG7B/PEXEG7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'TULNA 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/TULNA7B/TULNA7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/TULNA7B/TULNA7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'VEMBO 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/VEMBO7B/VEMBO7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/VEMBO7B/VEMBO7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'LATID 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/LATID7B/LATID7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/LATID7B/LATID72_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'VEMBO 7S': ['assets/VOBL_RWY27R/SID27R_VOBL/VEMBO7S/VEMBO7S_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/VEMBO7S/VEMBO7S_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'ANIRO 7S': ['assets/VOBL_RWY27R/SID27R_VOBL/ANIRO7S/ANIRO7S_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/ANIRO7S/ANIRO7S_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'VAGPU 7B': ['assets/VOBL_RWY27R/SID27R_VOBL/VAGPU7B/VAGPU7B_Point.geojson', 'assets/VOBL_RWY27R/SID27R_VOBL/VAGPU7B/VAGPU7B_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      //VOBL_RWY27R star procedure
+      'ADKAL 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/ADKAL7F/ADKAL7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/ADKAL7F/ADKAL7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'GUNIM 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/GUNIM7F/GUNIM7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/GUNIM7F/GUNIM7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'GUNIM 7N': ['assets/VOBL_RWY27R/STAR27R_VOBL/GUNIM7N/GUNIM7N_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/GUNIM7N/GUNIM7N_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'LEKAP 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/LEKAP7F/LEKAP7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/LEKAP7F/LEKAP7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'PEXEG 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/PEXEG7F/PEXEG7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/PEXEG7F/PEXEG7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'PEXEG 7N': ['assets/VOBL_RWY27R/STAR27R_VOBL/PEXEG7N/PEXEG7N_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/PEXEG7N/PEXEG7N_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'RIKBU 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/RIKBU7F/RIKBU7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/RIKBU7F/RIKBU7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'SUSIK 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/SUSIK7F/SUSIK7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/SUSIK7F/SUSIK7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'SUSIK 7L': ['assets/VOBL_RWY27R/STAR27R_VOBL/SUSIK7L/SUSIK7L_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/SUSIK7L/SUSIK7L_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'TELUV 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/TELUV7F/TELUV7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/TELUV7F/TELUV7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'UGABA 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/UGABA7F/UGABA7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/UGABA7F/UGABA7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      'XIVIL 7F': ['assets/VOBL_RWY27R/STAR27R_VOBL/XIVIL7F/XIVIL7F_Point.geojson', 'assets/VOBL_RWY27R/STAR27R_VOBL/XIVIL7F/XIVIL7F_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      //VOBL_RWY27R APCh procedure
+      'RNP_Y': ['assets/VOBL_RWY27R/APCH27R_VOBL/RNP_Y_RWY_27R_Point.geojson', 'assets/VOBL_RWY27R/APCH27R_VOBL/RNP_Y_RWY_27R_Line.geojson', 'assets/RWY/VOBL_RWY27R.geojson'],
+      //VIJP_RWY09 sid procedures
+      'UKASO 1D': ['assets/VIJP_RWY09/SID_RWY09/UKASO1D/UKASO1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/UKASO1D/UKASO1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'UXENI 1D': ['assets/VIJP_RWY09/SID_RWY09/UXENI1D/UXENI1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/UXENI1D/UXENI1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'GUDUM 1D': ['assets/VIJP_RWY09/SID_RWY09/GUDUM1D/GUDUM1D_1_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/GUDUM1D/GUDUM1D_1_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'NIKOT 1D': ['assets/VIJP_RWY09/SID_RWY09/NIKOT1D/NIKOT1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/NIKOT1D/NIKOT1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'IKAVA 1D': ['assets/VIJP_RWY09/SID_RWY09/IKAVA1D/IKAVA1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/IKAVA1D/IKAVA1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'INTIL 1D': ['assets/VIJP_RWY09/SID_RWY09/INTIL1D/INTIL1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/INTIL1D/INTIL1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'LOVGA 1D': ['assets/VIJP_RWY09/SID_RWY09/LOVGA1D/LOVGA1D_Point.geojson', 'assets/VIJP_RWY09/SID_RWY09/LOVGA1D/LOVGA1D_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      //VIJP_RWY09 Star procedures
+      'IGOLU 1C': ['assets/VIJP_RWY09/STAR_RWO9/IGOLU1C/IGOLU1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/IGOLU1C/IGOLU1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'LOVGA 1C': ['assets/VIJP_RWY09/STAR_RWO9/LOVGA1C/LOVGA1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/LOVGA1C/LOVGA1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'BUBNU 1C': ['assets/VIJP_RWY09/STAR_RWO9/BUBNU1C/BUBNU1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/BUBNU1C/BUBNU1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'RIDRA 1C': ['assets/VIJP_RWY09/STAR_RWO9/RIDRA1C/RIDRA1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/RIDRA1C/RIDRA1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'INTIL 1C': ['assets/VIJP_RWY09/STAR_RWO9/INTILC/INTIL1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/INTILC/INTIL1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      'UXENI 1C': ['assets/VIJP_RWY09/STAR_RWO9/UXENI1C/UXENI1C_Point.geojson', 'assets/VIJP_RWY09/STAR_RWO9/UXENI1C/UXENI1C_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      //VIJP_RWY09 APCH procedures
+      'RNP_Y_RWY_09': ['assets/VIJP_RWY09/APCH_RW09/RNP_Y_RWY_09_Point.geojson', 'assets/VIJP_RWY09/APCH_RW09/RNP_Y_RWY_09_Line.geojson', 'assets/RWY/VIJP_RWY09.geojson'],
+      //VIJP_RWY27 SID procedures
+      'GUDUM 1B': ['assets/VIJP_RWY27/SID_RWY27/GUDUM1B/GUDUM1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/GUDUM1B/GUDUM1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'UXENI 1B': ['assets/VIJP_RWY27/SID_RWY27/UXENI1B/UXENI1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/UXENI1B/UXENI1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'IKAVA 1B': ['assets/VIJP_RWY27/SID_RWY27/IKAVA1B/IKAVA1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/IKAVA1B/IKAVA1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'INTIL 1B': ['assets/VIJP_RWY27/SID_RWY27/INTIL1B/INTIL1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/INTIL1B/INTIL1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'UKASO 1B': ['assets/VIJP_RWY27/SID_RWY27/UKASO1B/UKASO1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/UKASO1B/UKASO1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'LOVGA 1B': ['assets/VIJP_RWY27/SID_RWY27/LOVGA1B/LOVGA1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/LOVGA1B/LOVGA1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'NIKOT 1B': ['assets/VIJP_RWY27/SID_RWY27/NIKOT1B/NIKOT1B_Point.geojson', 'assets/VIJP_RWY27/SID_RWY27/NIKOT1B/NIKOT1B_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+
+      //VIJP_RWY27 STAR procedures
+      'IGOLU 1A': ['assets/VIJP_RWY27/STAR_RWY27/IGOLU1A/IGOLU1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/IGOLU1A/IGOLU1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'LOVGA 1A': ['assets/VIJP_RWY27/STAR_RWY27/LOVGA1A/LOVGA1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/LOVGA1A/LOVGA1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'INTIL 1A': ['assets/VIJP_RWY27/STAR_RWY27/INTIL1A/INTIL1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/INTIL1A/INTIL1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'RIDRA 1A': ['assets/VIJP_RWY27/STAR_RWY27/RIDRA1A/RIDRA1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/RIDRA1A/RIDRA1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'BUBNU 1A': ['assets/VIJP_RWY27/STAR_RWY27/BUBNU1A/BUBNU1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/BUBNU1A/BUBNU1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      'UXENI 1A': ['assets/VIJP_RWY27/STAR_RWY27/UXENI1A/UXENI1A_Point.geojson', 'assets/VIJP_RWY27/STAR_RWY27/UXENI1A/UXENI1A_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      //VIJP_RWY27 APCH procedures
+      'RNP_Y_RWY27': ['assets/VIJP_RWY27/APCH_RW27/RNP_Y_RWY27_Point.geojson', 'assets/VIJP_RWY27/APCH_RW27/RNP_Y_RWY27_Line.geojson', 'assets/RWY/VIJP_RWY27.geojson'],
+      //VEPY_RWY02 APCH procedures
+      'RNP_Y_RWY02': ['assets/VEPY/APCH_RWY02/RNP_Y_RWY02_Point.geojson', 'assets/VEPY/APCH_RWY02/RNP_Y_RWY02_Line.geojson', 'assets/RWY/VEPY_RWY02.geojson'],
+      //VEPY_RWY20 SID procedures
+      'BGD1': ['assets/VEPY/SID_RWY20/BGD1_Departure/BGD1_Point.geojson', 'assets/VEPY/SID_RWY20/BGD1_Departure/BGD1_Line.geojson', 'assets/RWY/VEPY_RWY20.geojson'],
+      //VOBL_RWY09R SID procedures
+      'AKTIM 7C': ['assets/VOBL_RWY09R/AKTIM7C/AKTIM7C_Point.geojson', 'assets/VOBL_RWY09R/AKTIM7C/AKTIM7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'ANIRO 7C': ['assets/VOBL_RWY09R/ANIRO7C/ANIRO7C_Point.geojson', 'assets/VOBL_RWY09R/ANIRO7C/ANIRO7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'GUNIM 7C': ['assets/VOBL_RWY09R/GUNIM7C/GUNIM7C_Point.geojson', 'assets/VOBL_RWY09R/GUNIM7C/GUNIM7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'GUNIM 7M': ['assets/VOBL_RWY09R/GUNIM7M/GUNIM7M_Point.geojson', 'assets/VOBL_RWY09R/GUNIM7M/GUNIM7M_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'LATID 7C': ['assets/VOBL_RWY09R/LATID7C/LATID7C_Point.geojson', 'assets/VOBL_RWY09R/LATID7C/LATID7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'OPAMO 7C': ['assets/VOBL_RWY09R/OPAMO7C/OPAMO7C_Point.geojson', 'assets/VOBL_RWY09R/OPAMO7C/OPAMO7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'PEXEG 7C': ['assets/VOBL_RWY09R/PEXEG7C/PEXEG7C_Point.geojson', 'assets/VOBL_RWY09R/PEXEG7C/PEXEG7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'SAI 7C': ['assets/VOBL_RWY09R/SAI7C/SAI7C_Point.geojson', 'assets/VOBL_RWY09R/SAI7C/SAI7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'TULNA 7C': ['assets/VOBL_RWY09R/TULNA7C/TULNA7C_Point.geojson', 'assets/VOBL_RWY09R/TULNA7C/TULNA7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'VAGPU 7C': ['assets/VOBL_RWY09R/VAGPU7C/VAGPU7C_Point.geojson', 'assets/VOBL_RWY09R/VAGPU7C/VAGPU7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      'VEMBO 7C': ['assets/VOBL_RWY09R/VEMBO7C/VEMBO7C_Point.geojson', 'assets/VOBL_RWY09R/VEMBO7C/VEMBO7C_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      //VOBL_RWY09R APCH procedures
+      'RNP_Y_RWY09R': ['assets/VOBL_RWY09R/VOBL_APCH09R/RNP_Y_RWY09R_Point.geojson', 'assets/VOBL_RWY09R/VOBL_APCH09R/RNP_Y_RWY09R_Line.geojson', 'assets/RWY/VOBL_RWY09R.geojson'],
+      //VOBL_RWY27L SID procedures
+      'AKTIM 7D': ['assets/VOBL_RW27L/AKTIM7D/AKTIM7D_Point.geojson', 'assets/VOBL_RW27L/AKTIM7D/AKTIM7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'ANIRO 7D': ['assets/VOBL_RW27L/ANIRO7D/ANIRO7D_Point.geojson', 'assets/VOBL_RW27L/ANIRO7D/ANIRO7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'GUNIM 7D': ['assets/VOBL_RW27L/GUNIM7D/GUNIM7D_Point.geojson', 'assets/VOBL_RW27L/GUNIM7D/GUNIM7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'GUNIM 7U': ['assets/VOBL_RW27L/GUNIM7U/GUNIM7U_Point.geojson', 'assets/VOBL_RW27L/GUNIM7U/GUNIM7U_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'LATID 7D': ['assets/VOBL_RW27L/LATID7D/LATID7D_Point.geojson', 'assets/VOBL_RW27L/LATID7D/LATID7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'OPAMO 7D': ['assets/VOBL_RW27L/OPAMO7D/OPAMO7D_Point.geojson', 'assets/VOBL_RW27L/OPAMO7D/OPAMO7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'PEXEG 7D': ['assets/VOBL_RW27L/PEXEG7D/PEXEG7D_Point.geojson', 'assets/VOBL_RW27L/PEXEG7D/PEXEG7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'SAI 7D': ['assets/VOBL_RW27L/SAI7D/SAI7D_Point.geojson', 'assets/VOBL_RW27L/SAI7D/SAI7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'TULNA 7D': ['assets/VOBL_RW27L/TULNA7D/TULNA7D_Point.geojson', 'assets/VOBL_RW27L/TULNA7D/TULNA7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'VAGPU 7D': ['assets/VOBL_RW27L/VAGPU7D/VAGPU7D_Point.geojson', 'assets/VOBL_RW27L/VAGPU7D/VAGPU7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'VEMBO 7D': ['assets/VOBL_RW27L/VEMBO7D/VEMBO7D_Point.geojson', 'assets/VOBL_RW27L/VEMBO7D/VEMBO7D_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'VEMBO 7Y': ['assets/VOBL_RW27L/VEMBO7Y/VEMBO7Y_Point.geojson', 'assets/VOBL_RW27L/VEMBO7Y/VEMBO7Y_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      'ANIRO 7Y': ['assets/VOBL_RW27L/ANIRO7Y/ANIRO7Y_Point.geojson', 'assets/VOBL_RW27L/ANIRO7Y/ANIRO7Y_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+      //VOBL_RWY27L APCH procedures
+      'RNP_Y_RWY27L': ['assets/VOBL_RW27L/VOBL_APCH27L/RNP_Y_RWY27L_Point.geojson', 'assets/VOBL_RW27L/VOBL_APCH27L/RNP_Y_RWY27L_Line.geojson', 'assets/RWY/VOBL_RWY27L.geojson'],
+    };
+    // Iterate over selected procedures and load them
+    for (const procedureName in proceduresMap) {
+      if (this.selectedProcedureName.includes(procedureName)) {
+        const [pointFileName, lineFileName, iconFileName] = proceduresMap[procedureName];
+        loadSIDProcedure(procedureName, pointFileName, lineFileName, iconFileName);
+      }
+    }
+  }
+
+  watchAirportChanges(): void {
+    this.Airform.get('selectedAirport')?.valueChanges.subscribe((selectedAirport: string[]) => {
+      // Clear all runway and procedure options when the selected airport changes
+      this.optionsBengaluruKIARunway = [];
+      this.optionsVIJPJAIPURRunway = [];
+      this.optionsVEPYPAKYONGRunway = [];
+      this.optionsRWY_09LTypeofProcedure = [];
+      this.selectedTypeofProcedure = [];
+
+
+      const customIcon = L.icon({
+        iconUrl: 'assets/airport.png',
+        iconSize: [30, 30],
+        iconAnchor: [10, 30]
+      });
+
+
+
+      // Check if VOBL/Bengaluru (KIA) is selected
+      if (selectedAirport.includes('VOBL/Bengaluru (KIA)')) {
+
+        this.airportLayerGroup.clearLayers(); // Remove all markers when no airport is selected
+
+        const marker = L.marker([13.198889, 77.705556], { icon: customIcon }).addTo(this.airportLayerGroup);
+
+
+        // Set the map view to the marker's position
+        this.map.setView([13.1979, 77.7063], 13);
+
+
+        this.optionsBengaluruKIARunway = [
+          { value: 'RWY 09L', label: 'RWY 09L' },
+          { value: 'RWY_9R', label: 'RWY 09R' },
+          { value: '27L_RWY', label: 'RWY 27L' },
+          { value: 'RWY 27R', label: 'RWY 27R' },
+        ];
+        // Set view to Bengaluru
+        this.map.setView([13.206944, 77.704167], 12);
+      } else {
+        this.optionsBengaluruKIARunway = [];
+      }
+
+      // Check if VIJP/JAIPUR is selected
+      if (selectedAirport.includes('VIJP/JAIPUR')) {
+        const marker = L.marker([26.824167, 75.8025], { icon: customIcon }).addTo(this.airportLayerGroup);
+
+
+        // Set the map view to the marker's position
+        this.map.setView([23.071111, 72.626389], 13);
+
+
+        // Show options for VIJP/JAIPUR
+        this.optionsVIJPJAIPURRunway = [
+          { value: 'RWY_09', label: 'RWY_08' },
+          { value: 'RWY_27', label: 'RWY_26' },
+        ];
+        // Set view to Jaipur
+        this.map.setView([26.824167, 75.812222], 12);
+      } else {
+        this.optionsVIJPJAIPURRunway = [];
+      }
+      // Check if VEPY/PAKYONG is selected
+      if (selectedAirport.includes('VEPY/PAKYONG')) {
+        const marker = L.marker([27.225833, 88.585833], { icon: customIcon }).addTo(this.airportLayerGroup);
+
+        // Set the map view to the marker's position
+        this.map.setView([27.1333, 88.3509], 13);
+        // Show options for VEPY/PAKYONG
+        this.optionsVEPYPAKYONGRunway = [
+          { value: 'RWY 02', label: 'RWY 02' },
+          { value: 'RWY 20', label: 'RWY 20' },
+        ];
+        // Set view to Pakyong
+        this.map.setView([27.2394, 88.5961], 12);
+      } else {
+        this.optionsVEPYPAKYONGRunway = [];
+      }
+    });
+
+    this.Airform.get('selectedRunway')?.valueChanges.subscribe((selectedRunway: string[]) => {
+      // Reset options for both runways
+      this.selectedTypeofProcedure = [];
+      this.optionsRWY_09LTypeofProcedure = [];
+
+      // Check if RWY 09L or RWY 27R is selected
+      if (selectedRunway.includes('RWY 09L') || selectedRunway.includes('RWY 27R') ||
+        selectedRunway.includes('RWY_09') || selectedRunway.includes('RWY 02') ||
+        selectedRunway.includes('RWY 20') || selectedRunway.includes('RWY_27') ||
+        selectedRunway.includes('RWY_9R') || selectedRunway.includes('27L_RWY')) {
+
+        this.optionsRWY_09LTypeofProcedure = [
+          { value: 'SID', label: 'SID' },
+          { value: 'STAR', label: 'STAR' },
+          { value: 'APCH', label: 'APCH' },
+        ];
+      }
+    });
+
+    this.Airform.get('selectedTypeofProcedure')?.valueChanges.subscribe((selectedTypeofProcedure: string[]) => {
+
+      let filteredOptions: { value: string, label: string }[] = [];
+
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY 09L')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'AKTIM 7A', label: 'AKTIM 7A' },
+            { value: 'ANIRO 7A', label: 'ANIRO 7A' },
+            { value: 'GUNIM 7A', label: 'GUNIM 7A' },
+            { value: 'VAGPU 7A', label: 'VAGPU 7A' },
+            { value: 'GUNIM 7L', label: 'GUNIM 7L' },
+            { value: 'OPAMO 7A', label: 'OPAMO 7A' },
+            { value: 'PEXEG 7A', label: 'PEXEG 7A' },
+            { value: 'TULNA 7A', label: 'TULNA 7A' },
+            { value: 'VEMBO 7A', label: 'VEMBO 7A' },
+            { value: 'LATID 7A', label: 'LATID 7A' },
+            { value: 'SAI 7A', label: 'SAI 7A' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('STAR')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'ADKAL 7E', label: 'ADKAL 7E' },
+            { value: 'GUNIM 7E', label: 'GUNIM 7E' },
+            { value: 'LEKAP 7E', label: 'LEKAP 7E' },
+            { value: 'PEXEG 7E', label: 'PEXEG 7E' },
+            { value: 'RIKBU 7E', label: 'RIKBU 7E' },
+            { value: 'SUSIK 7E', label: 'SUSIK 7E' },
+            { value: 'SUSIK 7J', label: 'SUSIK 7J' },
+            { value: 'TELUV 7E', label: 'TELUV 7E' },
+            { value: 'UGABA 7E', label: 'UGABA 7E' },
+            { value: 'XIVIL 7E', label: 'XIVIL 7E' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP', label: 'RNP_RWY_09L' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY 27R')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'AKTIM 7B', label: 'AKTIM 7B' },
+            { value: 'ANIRO 7B', label: 'ANIRO 7B' },
+            { value: 'GUNIM 7B', label: 'GUNIM 7B' },
+            { value: 'GUNIM 7J', label: 'GUNIM 7J' },
+            { value: 'OPAMO 7B', label: 'OPAMO 7B' },
+            { value: 'SAI 7B', label: 'SAI 7B' },
+            { value: 'PEXEG 7B', label: 'PEXEG 7B' },
+            { value: 'TULNA 7B', label: 'TULNA 7B' },
+            { value: 'VEMBO 7B', label: 'VEMBO 7B' },
+            { value: 'LATID 7B', label: 'LATID 7B' },
+            { value: 'VEMBO 7S', label: 'VEMBO 7S' },
+            { value: 'ANIRO 7S', label: 'ANIRO 7S' },
+            { value: 'VAGPU 7B', label: 'VAGPU 7B' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('STAR')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'ADKAL 7F', label: 'ADKAL 7F' },
+            { value: 'GUNIM 7F', label: 'GUNIM 7F' },
+            { value: 'GUNIM 7N', label: 'GUNIM 7N' },
+            { value: 'LEKAP 7F', label: 'LEKAP 7F' },
+            { value: 'PEXEG 7F', label: 'PEXEG 7F' },
+            { value: 'PEXEG 7N', label: 'PEXEG 7N' },
+            { value: 'RIKBU 7F', label: 'RIKBU 7F' },
+            { value: 'SUSIK 7F', label: 'SUSIK 7F' },
+            { value: 'SUSIK 7L', label: 'SUSIK 7L' },
+            { value: 'TELUV 7F', label: 'TELUV 7F' },
+            { value: 'UGABA 7F', label: 'UGABA 7F' },
+            { value: 'XIVIL 7F', label: 'XIVIL 7F' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y', label: 'RNP_Y_RWY_27R' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY_09')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'UKASO 1D', label: 'UKASO 1D' },
+            { value: 'UXENI 1D', label: 'UXENI 1D' },
+            { value: 'GUDUM 1D', label: 'GUDUM 1D' },
+            { value: 'NIKOT 1D', label: 'NIKOT 1D' },
+            { value: 'IKAVA 1D', label: 'IKAVA 1D' },
+            { value: 'INTIL 1D', label: 'INTIL 1D' },
+            { value: 'LOVGA 1D', label: 'LOVGA 1D' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('STAR')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'IGOLU 1C', label: 'IGOLU 1C' },
+            { value: 'LOVGA 1C', label: 'LOVGA 1C' },
+            { value: 'BUBNU 1C', label: 'BUBNU 1C' },
+            { value: 'RIDRA 1C', label: 'RIDRA 1C' },
+            { value: 'INTIL 1C', label: 'INTIL 1C' },
+            { value: 'UXENI 1C', label: 'UXENI 1C' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y_RWY_09', label: 'RNP_Y_RWY_09' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY_27')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'UXENI 1B', label: 'UXENI 1B' },
+            { value: 'IKAVA 1B', label: 'IKAVA 1B' },
+            { value: 'INTIL 1B', label: 'INTIL 1B' },
+            { value: 'UKASO 1B', label: 'UKASO 1B' },
+            { value: 'LOVGA 1B', label: 'LOVGA 1B' },
+            { value: 'GUDUM 1B', label: 'GUDUM 1B' },
+            { value: 'NIKOT 1B', label: 'NIKOT 1B' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('STAR')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'IGOLU 1A', label: 'IGOLU 1A' },
+            { value: 'LOVGA 1A', label: 'LOVGA 1A' },
+            { value: 'INTIL 1A', label: 'INTIL 1A' },
+            { value: 'RIDRA 1A', label: 'RIDRA 1A' },
+            { value: 'BUBNU 1A', label: 'BUBNU 1A' },
+            { value: 'UXENI 1A', label: 'UXENI 1A' },
+          ]);
+        }
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y_RWY27', label: 'RNP_Y_RWY27' },
+
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY 20')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'BGD1', label: 'BGD1' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY 02')) {
+
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y_RWY02', label: 'RNP_Y_RWY02' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+
+      if (this.Airform.get('selectedRunway')?.value.includes('RWY_9R')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'AKTIM 7C', label: 'AKTIM 7C' },
+            { value: 'ANIRO 7C', label: 'ANIRO 7C' },
+            { value: 'GUNIM 7C', label: 'GUNIM 7C' },
+            { value: 'GUNIM 7M', label: 'GUNIM 7M' },
+            { value: 'LATID 7C', label: 'LATID 7C' },
+            { value: 'OPAMO 7C', label: 'OPAMO 7C' },
+            { value: 'PEXEG 7C', label: 'PEXEG 7C' },
+            { value: 'SAI 7C', label: 'SAI 7C' },
+            { value: 'TULNA 7C', label: 'TULNA 7C' },
+            { value: 'VAGPU 7C', label: 'VAGPU 7C' },
+            { value: 'VEMBO 7C', label: 'VEMBO 7C' },
+          ]);
+        }
+
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y_RWY09R', label: 'RNP_Y_RWY09R' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+
+      if (this.Airform.get('selectedRunway')?.value.includes('27L_RWY')) {
+        if (selectedTypeofProcedure.includes('SID')) {
+
+          filteredOptions = filteredOptions.concat([
+            { value: 'AKTIM 7D', label: 'AKTIM 7D' },
+            { value: 'ANIRO 7D', label: 'ANIRO 7D' },
+            { value: 'GUNIM 7D', label: 'GUNIM 7D' },
+            { value: 'GUNIM 7U', label: 'GUNIM 7U' },
+            { value: 'LATID 7D', label: 'LATID 7D' },
+            { value: 'OPAMO 7D', label: 'OPAMO 7D' },
+            { value: 'PEXEG 7D', label: 'PEXEG 7D' },
+            { value: 'SAI 7D', label: 'SAI 7D' },
+            { value: 'TULNA 7D', label: 'TULNA 7D' },
+            { value: 'VAGPU 7D', label: 'VAGPU 7D' },
+            { value: 'VEMBO 7D', label: 'VEMBO 7D' },
+            { value: 'VEMBO 7Y', label: 'VEMBO 7Y' },
+            { value: 'ANIRO 7Y', label: 'ANIRO 7Y' },
+          ]);
+        }
+
+        if (selectedTypeofProcedure.includes('APCH')) {
+          filteredOptions = filteredOptions.concat([
+            { value: 'RNP_Y_RWY27L', label: 'RNP_Y_RWY27L' },
+          ]);
+        }
+        this.optionsProcedureName = filteredOptions;
+      }
+    });
+  }
+
+  loadFIR(event: Event) {
+    this.stopPropagation(event);
+    const layerName = 'India_FIR';
+    if (!this.India_FIR) {
+      this.India_FIR = L.tileLayer.wms(
+        this.wmsUrl,
+        {
+          layers: layerName,
+          format: 'image/png',
+          transparent: true,
+        }
+      );
+      this.airportLayerGroup.clearLayers();
+      this.India_FIR.addTo(this.map).bringToFront();
+    } else {
+      if (this.map.hasLayer(this.India_FIR)) {
+        this.map.removeLayer(this.India_FIR);
+      } else {
+        this.India_FIR.addTo(this.map).bringToFront();
+      }
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+  getFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the GetFeatureInfo URL with current filters
+    const cqlFilter = this.selectedAirwayId ? `airway_id='${this.selectedAirwayId}'` : '';
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=convlinedata&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=convlinedata&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}${cqlFilter ? '&CQL_FILTER=' + encodeURIComponent(cqlFilter) : ''}`;
+
+    console.log('Constructed GetFeatureInfo URL:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = `<h3>Feature Info</h3>`;
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Feature properties:', properties);  // Log properties for each feature
+
+            if (properties) {
+              const displayProperties = [
+                'airway_id',
+                'start_point',
+                'end_point',
+                'track_magnetic',
+                'reverse_magnetic',
+                'radial_distance',
+                'upper_limit',
+                'lower_limit',
+                'airspace',
+                'mea',
+                'lateral_limits',
+                'direction_of_cruising_levels',
+                'type',
+                'remarks'
+              ];
+              displayProperties.forEach(prop => {
+                if (properties.hasOwnProperty(prop)) {
+                  popupContent += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+                }
+              });
+            } else {
+              console.log('No properties found for feature:', feature);
+            }
+          });
+
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching feature info:', error);
+      });
+  }
+
+  getNonConvFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the GetFeatureInfo URL with current filters
+    const cqlFilter = this.selectedAirwayId ? `airway_id='${this.selectedAirwayId}'` : '';
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=nonconvlinedata&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=nonconvlinedata&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}${cqlFilter ? '&CQL_FILTER=' + encodeURIComponent(cqlFilter) : ''}`;
+
+    console.log('Constructed GetFeatureInfo URL:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = `<h3>Feature Info</h3>`;
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Feature properties:', properties);  // Log properties for each feature
+
+            if (properties) {
+              const displayProperties = [
+                'airway_id',
+                'start_point',
+                'rnp_type',
+                'end_point',
+                'track_magnetic',
+                'reverse_magnetic',
+                'radial_distance',
+                'upper_limit',
+                'lower_limit',
+                'airspace',
+                'mea',
+                'lateral_limits',
+                'direction_of_cruising_levels',
+                'type',
+              ];
+              displayProperties.forEach(prop => {
+                if (properties.hasOwnProperty(prop)) {
+                  popupContent += `<strong>${prop}:</strong> ${properties[prop]}<br>`;
+                }
+              });
+            } else {
+              console.log('No properties found for feature:', feature);
+            }
+          });
+
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching feature info:', error);
+      });
+  }
+
+  getWaypointFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching feature info...');
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+    // Create the GetFeatureInfo URL with current filters
+    const cqlFilter = this.selectwaypoint ? `id='${this.selectwaypoint}'` : '';
+    console.log(cqlFilter, "dert")
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=significantpoints&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=significantpoints&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}${cqlFilter ? '&CQL_FILTER=' + encodeURIComponent(cqlFilter) : ''}`;
+    console.log('Constructed GetFeatureInfo URL:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = `<h3>Waypoint Info</h3>`; // Start with Waypoint Info header
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Feature properties:', properties);  // Log properties for each feature
+
+            if (properties) {
+              popupContent += `
+                         
+                          <strong>Waypoints:</strong> ${properties.waypoints}<br>
+                          <strong>Name of Routes:</strong> ${properties.name_of_routes}<br>
+                      `;
+            }
+          });
+          // Display the popup with all collected content
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching feature info:', error);
+      });
+  }
+
+  getNavaidFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching Navaid feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the GetFeatureInfo URL for the navaiddata layer
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=navaiddata&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=navaiddata&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+
+    console.log('Constructed GetFeatureInfo URL for navaiddata:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data for navaiddata:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = '<h3>Navaid Info</h3>'; // Initialize popup content for navaid data
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Navaid feature properties:', properties); // Log properties for each feature
+
+            if (properties) {
+              popupContent += `
+                            <strong>ID:</strong> ${properties.id}<br>
+                            <strong>Airport ICAO:</strong> ${properties.airport_icao}<br>
+                            <strong>Navaid Information:</strong> ${properties.navaid_information}<br>
+                        `;
+            }
+          });
+
+          // Display the popup with navaid data
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found for navaiddata');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching navaid feature info:', error);
+      });
+  }
+
+  getAerodromeObstacleFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching Aerodrome Obstacle feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=aerodrome_obstacle&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=aerodrome_obstacle&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+
+    console.log('Constructed GetFeatureInfo URL for aerodromeobstacle:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data for aerodromeobstacle:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = '<h3>Aerodrome Obstacle Info</h3>'; // Initialize popup content for aerodrome obstacles
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Aerodrome Obstacle feature properties:', properties); // Log properties for each feature
+
+            if (properties) {
+              popupContent += `
+                      
+                        <strong>Airport ICAO:</strong> ${properties.airport_icao || 'N/A'}<br>
+                        <strong>Area Affected:</strong> ${properties.area_affected || 'N/A'}<br>
+                        <strong>Obstacle Type:</strong> ${properties.obstacle_type || 'N/A'}<br>
+                        <strong>Elevation:</strong> ${properties.elevation || 'N/A'}<br>
+                        <strong>Marking Light:</strong> ${properties.marking_lgt || 'N/A'}<br>
+                        <strong>Remarks:</strong> ${properties.remarks || 'N/A'}<br>
+                    `;
+            }
+          });
+
+          // Display the popup with aerodrome obstacle data
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found for aerodromeobstacle');
+        }
+      })
+
+      .catch(error => {
+        console.error('Error fetching aerodrome obstacle feature info:', error);
+      });
+  }
+
+
+  getRestrictedAirspaceFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching Restricted Airspace feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the GetFeatureInfo URL for the restrictedairspace layer
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=restricted_areas&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=restricted_areas&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+
+    console.log('Constructed GetFeatureInfo URL for restrictedairspace:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data for restrictedairspace:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = '<h3>Restricted Airspace Info</h3>'; // Initialize popup content for restricted airspace
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Restricted Airspace feature properties:', properties); // Log properties for each feature
+
+            if (properties) {
+              // Append the desired properties to the popup content
+              popupContent += `
+                          
+                          <strong>Restrictive Airspace Name:</strong> ${properties.name || 'N/A'}<br>
+                          <strong>Airspace Type:</strong> ${properties.type || 'N/A'}<br>
+                      `;
+            }
+          });
+
+          // Display the popup with restricted airspace data
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found for restricted airspace');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching restricted airspace feature info:', error);
+      });
+  }
+
+  getControlAirspaceFeatureInfo(event: L.LeafletMouseEvent) {
+    console.log('Fetching Controlled Airspace feature info...');
+
+    const bbox = this.map.getBounds().toBBoxString();
+    const size = this.map.getSize();
+    const point = this.map.latLngToContainerPoint(event.latlng);
+
+    // Create the GetFeatureInfo URL for the controlairspace layer
+    const url = `${this.wmsUrl}?service=WMS&request=GetFeatureInfo&layers=controlairspace&styles=&format=image/png&transparent=true&version=1.1.1&height=${size.y}&width=${size.x}&srs=EPSG:4326&bbox=${bbox}&query_layers=controlairspace&info_format=application/json&x=${Math.floor(point.x)}&y=${Math.floor(point.y)}&_=${Date.now()}`;
+
+    console.log('Constructed GetFeatureInfo URL for controlairspace:', url);
+
+    fetch(url)
+      .then(response => {
+        if (!response.ok) {
+          throw new Error('Network response was not ok');
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Response data for controlairspace:', data);
+        if (data.features && data.features.length > 0) {
+          let popupContent = '<h3>Control Airspace Info</h3>'; // Initialize popup content for control airspace
+          data.features.forEach((feature: { properties: any; }) => {
+            const properties = feature.properties;
+            console.log('Controlled Airspace feature properties:', properties); // Log properties for each feature
+
+            if (properties) {
+              // Append the desired properties to the popup content
+              popupContent += `
+                          <strong>Airspace Center:</strong> ${properties.AirspaceCenter || 'N/A'}<br>
+                          <strong>Controlled Airspace Name:</strong> ${properties.ControlledAirspaceName || 'N/A'}<br>
+                      `;
+            }
+          });
+
+          // Display the popup with controlled airspace data
+          L.popup()
+            .setLatLng(event.latlng)
+            .setContent(popupContent)
+            .openOn(this.map);
+        } else {
+          console.log('No features found for controlled airspace');
+        }
+      })
+      .catch(error => {
+        console.error('Error fetching controlled airspace feature info:', error);
+      });
+  }
+
+
+  applyFilter(event: Event) {
+    event.preventDefault();  // Prevent form submission from reloading the page
+
+    // Get the value from the input fields
+    const airwayIdInput = (document.getElementById('airwayIdInput') as HTMLInputElement).value;
+    const upperLimitInput = (document.getElementById('upperLimitInput') as HTMLInputElement).value;
+
+    // Trim the inputs and ensure they're valid
+    this.selectedAirwayId = airwayIdInput.trim();
+    const upperLimit = upperLimitInput.trim() ? `FL ${upperLimitInput.trim()}` : null;    // Apply filter if either airway_id or upper_limit is set
+    if (this.selectedAirwayId || upperLimit) {
+      const layerName = 'convlinedata';
+
+      if (this.convLineDataLayer) {
+        // If a layer already exists, remove it
+        this.map.removeLayer(this.convLineDataLayer);
+      }
+
+      // Create the CQL_FILTER based on selected inputs
+      let cqlFilter = '';
+      if (this.selectedAirwayId) {
+        cqlFilter += `airway_id='${this.selectedAirwayId}'`;
+      }
+      if (upperLimit) {
+        if (cqlFilter) {
+          cqlFilter += ' AND ';
+        }
+        cqlFilter += `upper_limit='${upperLimit}'`;
+      }
+
+      // Custom parameters with CQL_FILTER for the specific filters
+      const customParams = L.Util.extend({
+        layers: layerName,
+        format: 'image/png',
+        transparent: true,
+        CQL_FILTER: cqlFilter  // Apply filter for both airway_id and upper_limit
+      }, {});
+
+      // Add the WMS layer with the custom filter applied
+      this.convLineDataLayer = L.tileLayer.wms(this.wmsUrl, customParams);
+
+      // Clear the previous layers and add the new one to the map
+      this.airportLayerGroup.clearLayers();
+      this.convLineDataLayer.addTo(this.map).bringToFront();
+      console.log(`WMS Layer added with filter: ${cqlFilter}`);
+    } else {
+      // If no filter is selected, remove the layer
+      if (this.convLineDataLayer) {
+        this.map.removeLayer(this.convLineDataLayer);
+        console.log('WMS Layer removed because no filters were selected');
+      }
+    }
+  }
+
+  toggleFilterPopup() {
+    this.filterPopupVisible = !this.filterPopupVisible;
+  }
+
+  // Method to close the filter popup
+  closeFilterPopup(event: Event) {
+    event.preventDefault(); // Prevent the default anchor click behavior
+    this.filterPopupVisible = false; // Close the popup
+  }
+
+  loadLayer(event: Event, layerName: string, layerVar: string) {
+    this.stopPropagation(event);
+
+    // Check if the layer already exists
+    if (!(this as any)[layerVar]) {
+        (this as any)[layerVar] = L.tileLayer.wms(this.wmsUrl, {
+            layers: layerName,
+            format: 'image/png',
+            transparent: true,
+        });
+
+        // Clear the airport layer group and add the new layer
+        this.airportLayerGroup.clearLayers();
+        (this as any)[layerVar].addTo(this.map).bringToFront();
+
+        // Show filter fields and popup if convlinedata or nonconvlinedata layer is loaded
+        if (layerName === 'convlinedata' || layerName === 'nonconvlinedata') {
+            this.filterPopupVisible = true; // Show filter popup
+            this.showFilterFields(true); // Show filter fields
+        }
+
+        // Add click event based on the layer type
+        this.map.on('click', (e: L.LeafletMouseEvent) => {
+            console.log('Map clicked at:', e.latlng);
+            this.handleLayerClick(layerName, e);
+        });
+
+        console.log(`${layerName} layer added to the map`);
+    } else {
+        // Layer already exists, toggle its visibility
+        if (this.map.hasLayer((this as any)[layerVar])) {
+            this.map.removeLayer((this as any)[layerVar]);
+            this.map.off('click'); // Remove all click events
+
+            // Hide filter fields and popup if convlinedata or nonconvlinedata layer is removed
+            if (layerName === 'convlinedata' || layerName === 'nonconvlinedata') {
+                this.filterPopupVisible = false; // Hide filter popup
+                this.showFilterFields(false); // Hide filter fields
+            }
+
+            console.log(`${layerName} layer removed from the map`);
+        } else {
+            (this as any)[layerVar].addTo(this.map).bringToFront();
+
+            // Ensure filter fields and popup are shown when re-adding
+            if (layerName === 'convlinedata' || layerName === 'nonconvlinedata') {
+                this.filterPopupVisible = true; // Show filter popup
+                this.showFilterFields(true); // Show filter fields
+            }
+
+            console.log(`${layerName} layer brought to the front`);
+        }
+    }
+}
+
+
+  // Function to show or hide filter fields
+  showFilterFields(visible: boolean) {
+    const filterFields = document.getElementById('filterFields');
+    if (filterFields) {
+      filterFields.style.display = visible ? 'block' : 'none';
+    }
+  }
+  applyconvfilter(event: Event) {
+    event.preventDefault(); // Prevent form submission
+
+    // Get filter values from input fields
+    const airwayId = (document.getElementById('airwayIdInputConv') as HTMLInputElement).value.trim();
+    const upperLimit = (document.getElementById('upperLimitInputConv') as HTMLInputElement).value.trim();
+    
+    // Build CQL_FILTER based on non-empty values
+    let cqlFilter = '';
+
+    if (airwayId) {
+        cqlFilter += `airway_id='${airwayId}'`;
+    }
+    if (upperLimit) {
+        if (cqlFilter) cqlFilter += ' AND ';
+        cqlFilter += `upper_limit='FL ${upperLimit}'`;
+    }
+
+    // Apply the constructed filter to the conventional line data layer
+    if (this.convLineDataLayer && cqlFilter) {
+        const customParams = L.Util.extend({
+            layers: 'convlinedata',
+            format: 'image/png',
+            transparent: true,
+            CQL_FILTER: cqlFilter
+        }, {});
+
+        this.map.removeLayer(this.convLineDataLayer); // Remove existing layer
+        this.convLineDataLayer = L.tileLayer.wms(this.wmsUrl, customParams); // Create new layer with filter
+        this.convLineDataLayer.addTo(this.map).bringToFront(); // Add new layer to the map
+
+        console.log(`Conventional filter applied: ${cqlFilter}`);
+    } else {
+        console.warn('No filters specified for conventional line data');
+    }
+}
+
+applynonconvfilter(event: Event) {
+    event.preventDefault(); // Prevent form submission
+
+    // Get filter values from input fields
+    const airwayId = (document.getElementById('airwayIdInputNonConv') as HTMLInputElement).value.trim();
+    const upperLimit = (document.getElementById('upperLimitInputNonConv') as HTMLInputElement).value.trim();
+    
+    // Build CQL_FILTER based on non-empty values
+    let cqlFilter = '';
+
+    if (airwayId) {
+        cqlFilter += `airway_id='${airwayId}'`;
+    }
+    if (upperLimit) {
+        if (cqlFilter) cqlFilter += ' AND ';
+        cqlFilter += `upper_limit='FL ${upperLimit}'`;
+    }
+
+    // Apply the constructed filter to the non-conventional line data layer
+    if (this.nonConvLineDataLayer && cqlFilter) {
+        const customParams = L.Util.extend({
+            layers: 'nonconvlinedata',
+            format: 'image/png',
+            transparent: true,
+            CQL_FILTER: cqlFilter
+        }, {});
+
+        this.map.removeLayer(this.nonConvLineDataLayer); // Remove existing layer
+        this.nonConvLineDataLayer = L.tileLayer.wms(this.wmsUrl, customParams); // Create new layer with filter
+        this.nonConvLineDataLayer.addTo(this.map).bringToFront(); // Add new layer to the map
+
+        console.log(`Non-Conventional filter applied: ${cqlFilter}`);
+    } else {
+        console.warn('No filters specified for non-conventional line data');
+    }
+}
+
+  handleLayerClick(layerName: string, event: L.LeafletMouseEvent) {
+    switch (layerName) {
+      case 'convlinedata':
+        this.getFeatureInfo(event);
+        // Change this line to pass the event object directly
+            break;
+      case 'nonconvlinedata':
+        this.getNonConvFeatureInfo(event);
+        break;
+      case 'significantpoints':
+        this.getWaypointFeatureInfo(event);
+        break;
+      case 'navaids':
+        this.getNavaidFeatureInfo(event);
+        break;
+      case 'controlairspace':
+        this.getControlAirspaceFeatureInfo(event);
+        break;
+      case 'restrictedairspace':
+        this.getRestrictedAirspaceFeatureInfo(event);
+        break;
+      case 'aerodrome_obstacle':
+        this.getAerodromeObstacleFeatureInfo(event);
+        break;
+      default:
+        console.warn(`No click handler for layer: ${layerName}`);
+    }
+  }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  loadairport(event: Event) {
+    this.stopPropagation(event);
+    const layerName = 'airportdetails';
+    if (!this.airportdetails) {
+      this.airportdetails = L.tileLayer.wms(
+        this.wmsUrl,
+        {
+          layers: layerName,
+          format: 'image/png',
+          transparent: true,
+        }
+      );
+      this.airportLayerGroup.clearLayers();
+      this.airportdetails.addTo(this.map).bringToFront();
+    } else {
+      if (this.map.hasLayer(this.airportdetails)) {
+        this.map.removeLayer(this.airportdetails);
+      } else {
+        this.airportdetails.addTo(this.map).bringToFront();
+      }
+    }
+  }
+
+  loadairway2() {
+    const layerName = 'thailandconvlinedata';
+    if (!this.Airway2) {
+      this.Airway2 = L.tileLayer.wms(
+        this.wmsUrl,
+        {
+          layers: layerName,
+          format: 'image/png',
+          transparent: true,
+        }
+      );
+      this.airportLayerGroup.clearLayers();
+      this.Airway2.addTo(this.map).bringToFront();
+    } else {
+      if (this.map.hasLayer(this.Airway2)) {
+        this.map.removeLayer(this.Airway2);
+      } else {
+        this.Airway2.addTo(this.map).bringToFront();
+      }
+    }
+  }
+  loadthailandenroute() {
+    const layerName = 'thailandenroute';
+    if (!this.thailandenroute) {
+      this.thailandenroute = L.tileLayer.wms(
+        this.wmsUrl,
+        {
+          layers: layerName,
+          format: 'image/png',
+          transparent: true,
+        }
+      );
+      this.airportLayerGroup.clearLayers();
+      this.thailandenroute.addTo(this.map).bringToFront();
+    } else {
+      if (this.map.hasLayer(this.thailandenroute)) {
+        this.map.removeLayer(this.thailandenroute);
+      } else {
+        this.thailandenroute.addTo(this.map).bringToFront();
+      }
+    }
+  }
+
+  loadFIR1() {
+    const layerName = 'FIR';
+    if (!this.FIR) {
+      this.FIR = L.tileLayer.wms(
+        this.wmsUrl,
+        {
+          layers: layerName,
+          format: 'image/png',
+          transparent: true,
+        }
+      );
+      this.airportLayerGroup.clearLayers();
+      this.FIR.addTo(this.map).bringToFront();
+    } else {
+      if (this.map.hasLayer(this.FIR)) {
+        this.map.removeLayer(this.FIR);
+      } else {
+        this.FIR.addTo(this.map).bringToFront();
+      }
+    }
+  }
+
+
+  changeLineColor(color: string) {
+    this.lineGeoJsonLayer.setStyle({ color });
+    this.airportLayerGroup.setStyle({ color });
+  }
+
+  logout(): void {
+    this.authService.logout();
+    this.router.navigate(['/login']);
+  }
+
+
+}

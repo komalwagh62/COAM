@@ -28,7 +28,6 @@ import { LayoutModule } from '@angular/cdk/layout';
 import { MapViewerComponent } from './map-viewer/map-viewer.component';
 import { LeafletMapComponent } from './leaflet-map/leaflet-map.component';
 
-
 @NgModule({
     declarations: [
         AppComponent,
